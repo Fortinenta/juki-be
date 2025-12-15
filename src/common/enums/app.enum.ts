@@ -1,0 +1,21 @@
+export enum UserRole {
+  USER = 'USER',
+  ADMIN = 'ADMIN',
+  SUPER_ADMIN = 'SUPER_ADMIN',
+}
+
+export enum UserStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  SUSPENDED = 'SUSPENDED',
+  DELETED = 'DELETED',
+}
+
+export enum AuditAction {
+  LOGIN = 'LOGIN',
+  LOGOUT = 'LOGOUT',
+  REGISTER = 'REGISTER',
+  UPDATE_PROFILE = 'UPDATE_PROFILE',
+  UPDATE_PASSWORD = 'UPDATE_PASSWORD',
+  REFRESH_TOKEN = 'REFRESH_TOKEN',
+}

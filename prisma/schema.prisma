@@ -1,72 +1,101 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  REGISTER
+  UPDATE_PROFILE
+  UPDATE_PASSWORD
+  DELETE_ACCOUNT
+  REFRESH_TOKEN
+  REVOKE_TOKEN
 }
 
 model User {
-  id        String    @id @default(uuid())
-  email     String    @unique
+  id        String     @id @default(uuid())
+  email     String     @unique
   password  String
-  isActive  Boolean   @default(true)
+  role      UserRole   @default(USER)
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
 
   profile   Profile?
-  sessions  UserSession[]
-  roles     UserRole[]
+  sessions  Session[]
+  auditLogs AuditLog[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  @@map("users")
 }
 
 model Profile {
-  id        String   @id @default(uuid())
-  userId    String   @unique
-  fullName  String
-  phone     String?
-  avatarUrl String?
+  id          String   @id @default(uuid())
+  userId      String   @unique @map("user_id")
+  firstName   String?  @map("first_name")
+  lastName    String?  @map("last_name")
+  phoneNumber String?  @map("phone_number")
+  avatar      String?
+  bio         String?
+  dateOfBirth DateTime? @map("date_of_birth")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  user      User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  @@map("profiles")
 }
 
-model Role {
-  id        String   @id @default(uuid())
-  name      String   @unique
-
-  users     UserRole[]
-
-  createdAt DateTime @default(now())
-}
-
-model UserRole {
-  id     String @id @default(uuid())
-  userId String
-  roleId String
-
-  user   User @relation(fields: [userId], references: [id])
-  role   Role @relation(fields: [roleId], references: [id])
-
-  @@unique([userId, roleId])
-}
-
-model UserSession {
+model Session {
   id           String   @id @default(uuid())
-  userId       String
-  refreshToken String   @unique
-  userAgent    String
-  ipAddress    String
-  isActive     Boolean  @default(true)
-  expiresAt    DateTime
-  revokedAt    DateTime?
+  userId       String   @map("user_id")
+  refreshToken String   @unique @map("refresh_token")
+  userAgent    String?  @map("user_agent")
+  ipAddress    String?  @map("ip_address")
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  user         User     @relation(fields: [userId], references: [id])
-
-  createdAt    DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([refreshToken])
+  @@map("sessions")
+}
+
+model AuditLog {
+  id        String      @id @default(uuid())
+  userId    String      @map("user_id")
+  action    AuditAction
+  metadata  Json?
+  ipAddress String?     @map("ip_address")
+  userAgent String?     @map("user_agent")
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
 }
