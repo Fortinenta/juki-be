@@ -1,26 +1,13 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { UpdateProfileDto } from './dto/profiles.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class ProfilesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaClient) {}
 
-  async findByUserId(userId: string) {
+  async getByUserId(userId: string) {
     const profile = await this.prisma.profile.findUnique({
       where: { userId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            role: true,
-            status: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-      },
     });
 
     if (!profile) {
@@ -30,101 +17,46 @@ export class ProfilesService {
     return profile;
   }
 
-  async update(
+  async updateProfile(
     userId: string,
-    dto: UpdateProfileDto,
-    currentUserId: string,
-    ipAddress?: string,
-    userAgent?: string,
+    data: {
+      fullName?: string;
+      phone?: string;
+      avatarUrl?: string;
+    },
   ) {
-    // Users can only update their own profile
-    if (userId !== currentUserId) {
-      throw new ForbiddenException('You can only update your own profile');
-    }
+    await this.ensureProfileExists(userId);
 
-    const profile = await this.prisma.profile.findUnique({
+    return this.prisma.profile.update({
       where: { userId },
+      data,
     });
-
-    if (!profile) {
-      throw new NotFoundException('Profile not found');
-    }
-
-    const updatedProfile = await this.prisma.$transaction(async (prisma) => {
-      const updated = await prisma.profile.update({
-        where: { userId },
-        data: {
-          ...dto,
-          dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              email: true,
-              role: true,
-              status: true,
-            },
-          },
-        },
-      });
-
-      // Create audit log
-      await prisma.auditLog.create({
-        data: {
-          userId,
-          action: 'UPDATE_PROFILE',
-          metadata: { fields: Object.keys(dto) },
-          ipAddress,
-          userAgent,
-        },
-      });
-
-      return updated;
-    });
-
-    return updatedProfile;
   }
 
-  async uploadAvatar(userId: string, avatarUrl: string, currentUserId: string) {
-    if (userId !== currentUserId) {
-      throw new ForbiddenException('You can only update your own avatar');
-    }
-
-    const profile = await this.prisma.profile.findUnique({
-      where: { userId },
+  async createProfile(
+    userId: string,
+    data: {
+      fullName: string;
+      phone?: string;
+      avatarUrl?: string;
+    },
+  ) {
+    return this.prisma.profile.create({
+      data: {
+        userId,
+        ...data,
+      },
     });
-
-    if (!profile) {
-      throw new NotFoundException('Profile not found');
-    }
-
-    const updatedProfile = await this.prisma.profile.update({
-      where: { userId },
-      data: { avatar: avatarUrl },
-    });
-
-    return updatedProfile;
   }
 
-  async deleteAvatar(userId: string, currentUserId: string) {
-    if (userId !== currentUserId) {
-      throw new ForbiddenException('You can only delete your own avatar');
-    }
-
-    const profile = await this.prisma.profile.findUnique({
+  private async ensureProfileExists(userId: string): Promise<void> {
+    const exists = await this.prisma.profile.findUnique({
       where: { userId },
+      select: { id: true },
     });
 
-    if (!profile) {
+    if (!exists) {
       throw new NotFoundException('Profile not found');
     }
-
-    const updatedProfile = await this.prisma.profile.update({
-      where: { userId },
-      data: { avatar: null },
-    });
-
-    return updatedProfile;
   }
 }

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+// import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
 import appConfig from './config/app.config';
 
@@ -24,12 +24,12 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
       load: [appConfig],
       envFilePath: ['.env.local', '.env'],
     }),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000, // 60 seconds
-        limit: 100, // 100 requests per ttl
-      },
-    ]),
+    // ThrottlerModule.forRoot([
+    //   {
+    //     ttl: 60000, // 60 seconds
+    //     limit: 100, // 100 requests per ttl
+    //   },
+    // ]),
     PrismaModule,
     LoggerModule,
     AuthModule,
@@ -40,10 +40,6 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
   ],
   controllers: [HealthController],
   providers: [
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

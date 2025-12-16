@@ -4,13 +4,8 @@ export class AuthTokens {
 }
 
 export class AuthResponse {
-  user: {
-    id: string;
-    email: string;
-    role: string;
-    status: string;
-  };
-  tokens: AuthTokens;
+  accessToken: string;
+  refreshToken: string;
 }
 
 export class ProfileResponse {
@@ -31,4 +26,15 @@ export class UserResponse {
   createdAt: Date;
   updatedAt: Date;
   profile?: ProfileResponse;
+}
+
+export class AuthTokenResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export class MeResponse {
+  id: string;
+  email: string;
+  role: string;
 }
