@@ -1,12 +1,11 @@
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
-
 
 enum UserRole {
   USER
@@ -25,27 +24,25 @@ enum AuditAction {
   REVOKE_TOKEN
 }
 
-
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  role      UserRole @default(USER)
-  isActive  Boolean  @default(true)
+  id       String   @id @default(uuid())
+  email    String   @unique
+  password String
+  role     UserRole @default(USER)
+  isActive Boolean  @default(true)
 
-  profile       Profile?
-  sessions      Session[]
-  auditLogs     AuditLog[]
-  trainingFlow  UserTrainingFlow?
-  attachments   Attachment[]
-  feedbacks     Feedback[]
+  profile      Profile?
+  sessions     Session[]
+  auditLogs    AuditLog[]
+  trainingFlow UserTrainingFlow?
+  attachments  Attachment[]
+  feedbacks    Feedback[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("users")
 }
-
 
 model Profile {
   id             String   @id @default(uuid())
@@ -70,10 +67,9 @@ model Profile {
   @@map("profiles")
 }
 
-
 model UserTrainingFlow {
-  id           String @id @default(uuid())
-  userId       String @unique
+  id           String  @id @default(uuid())
+  userId       String  @unique
   statusCode   String
   trainingId   String?
   ojsAccountId String? @unique
@@ -147,7 +143,7 @@ model OjsAccount {
 }
 
 model Attachment {
-  id           String @id @default(uuid())
+  id           String  @id @default(uuid())
   userId       String
   type         String
   filePath     String
@@ -164,7 +160,7 @@ model Attachment {
 }
 
 model SystemConfig {
-  key         String @id
+  key         String  @id
   value       String
   description String?
 
