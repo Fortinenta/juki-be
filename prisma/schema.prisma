@@ -1,5 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -9,12 +7,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum UserStatus {
-  ACTIVE
-  INACTIVE
-  SUSPENDED
-  DELETED
-}
 
 enum UserRole {
   USER
@@ -33,69 +25,196 @@ enum AuditAction {
   REVOKE_TOKEN
 }
 
-model User {
-  id        String     @id @default(uuid())
-  email     String     @unique
-  password  String
-  role      UserRole   @default(USER)
-  status    UserStatus @default(ACTIVE)
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
 
-  profile   Profile?
-  sessions  Session[]
-  auditLogs AuditLog[]
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      UserRole @default(USER)
+  isActive  Boolean  @default(true)
+
+  profile       Profile?
+  sessions      Session[]
+  auditLogs     AuditLog[]
+  trainingFlow  UserTrainingFlow?
+  attachments   Attachment[]
+  feedbacks     Feedback[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("users")
 }
 
+
 model Profile {
-  id          String   @id @default(uuid())
-  userId      String   @unique @map("user_id")
-  firstName   String?  @map("first_name")
-  lastName    String?  @map("last_name")
-  phoneNumber String?  @map("phone_number")
-  avatar      String?
-  bio         String?
-  dateOfBirth DateTime? @map("date_of_birth")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  fullName       String
+  nim            String   @unique
+  phone          String
+  faculty        String?
+  major          String?
+  studyProgram   String?
+  enrollmentYear Int?
+  birthPlace     String
+  birthDate      DateTime
+  gender         String
+  ktmPath        String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("profiles")
 }
 
-model Session {
-  id           String   @id @default(uuid())
-  userId       String   @map("user_id")
-  refreshToken String   @unique @map("refresh_token")
-  userAgent    String?  @map("user_agent")
-  ipAddress    String?  @map("ip_address")
-  expiresAt    DateTime @map("expires_at")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+
+model UserTrainingFlow {
+  id           String @id @default(uuid())
+  userId       String @unique
+  statusCode   String
+  trainingId   String?
+  ojsAccountId String? @unique
+  articleTitle String?
+  journalCode  String?
+  isLocked     Boolean @default(false)
+  lockedReason String?
+
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status   LookupStatus @relation(fields: [statusCode], references: [code])
+  training Training?    @relation(fields: [trainingId], references: [id])
+  ojs      OjsAccount?  @relation(fields: [ojsAccountId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([statusCode])
+  @@map("user_training_flows")
+}
+
+model LookupStatus {
+  code        String  @id
+  label       String
+  step        Int
+  description String?
+  isActive    Boolean @default(true)
+
+  flows UserTrainingFlow[]
+
+  @@map("lookup_status")
+}
+
+model Training {
+  id          String   @id @default(uuid())
+  batch       String
+  title       String
+  startAt     DateTime
+  endAt       DateTime
+  location    String
+  journalCode String
+  mentorName  String
+  quota       Int
+
+  flows UserTrainingFlow[]
+
+  createdAt DateTime @default(now())
+
+  @@map("trainings")
+}
+
+model LookupJournal {
+  code     String  @id
+  name     String
+  isActive Boolean @default(true)
+
+  @@map("lookup_journals")
+}
+
+model OjsAccount {
+  id          String @id @default(uuid())
+  username    String
+  password    String
+  journalCode String
+  journalLink String
+
+  flow UserTrainingFlow?
+
+  createdAt DateTime @default(now())
+
+  @@map("ojs_accounts")
+}
+
+model Attachment {
+  id           String @id @default(uuid())
+  userId       String
+  type         String
+  filePath     String
+  mimeType     String
+  originalName String?
+  size         Int?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  createdAt DateTime @default(now())
+
+  @@index([userId, type])
+  @@map("attachments")
+}
+
+model SystemConfig {
+  key         String @id
+  value       String
+  description String?
+
+  updatedAt DateTime @updatedAt
+
+  @@map("system_configs")
+}
+
+model Feedback {
+  id      String @id @default(uuid())
+  userId  String
+  message String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@map("feedbacks")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  refreshToken String   @unique
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([userId])
-  @@index([refreshToken])
   @@map("sessions")
 }
 
 model AuditLog {
   id        String      @id @default(uuid())
-  userId    String      @map("user_id")
+  userId    String
   action    AuditAction
   metadata  Json?
-  ipAddress String?     @map("ip_address")
-  userAgent String?     @map("user_agent")
-  createdAt DateTime    @default(now()) @map("created_at")
+  ipAddress String?
+  userAgent String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  createdAt DateTime @default(now())
+
   @@index([userId])
   @@index([action])
-  @@index([createdAt])
   @@map("audit_logs")
 }
