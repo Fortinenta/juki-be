@@ -10,6 +10,7 @@ import { UsersModule } from './modules/users/users.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
 import { ProfilesModule } from './modules/profiles/profiles.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { LoggerModule } from './modules/logger/logger.module';
 import { HealthController } from './health/health.controller';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
@@ -37,6 +38,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
     SessionsModule,
     ProfilesModule,
     AuditLogsModule,
+    AdminModule,
   ],
   controllers: [HealthController],
   providers: [

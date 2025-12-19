@@ -1,26 +1,32 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TrainingFlowService } from '../training-flow/training-flow.service';
-import { TRAINING_STATUS } from '../../common/constants/training-status.constants';
+// import { TRAINING_STATUS } from '../../common/constants/training-status.constants';
 
 @Injectable()
-export class PaymentsService {
+export class ArticlesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly trainingFlowService: TrainingFlowService,
   ) {}
 
-  async uploadPaymentProof(params: { userId: string; file: Express.Multer.File }) {
+  /**
+   * Upload artikel oleh mahasiswa
+   * - Simpan ke Attachment
+   * - Status tetap ARTICLE_WAITING (menunggu verifikasi admin)
+   */
+  async uploadArticle(params: { userId: string; file: Express.Multer.File }) {
     const { userId, file } = params;
 
     if (!file) {
-      throw new BadRequestException('Payment proof file is required');
+      throw new BadRequestException('Article file is required');
     }
 
+    // Simpan attachment artikel
     await this.prisma.attachment.create({
       data: {
         userId,
-        type: 'PAYMENT',
+        type: 'ARTICLE',
         filePath: file.path,
         mimeType: file.mimetype,
         originalName: file.originalname,
@@ -28,18 +34,11 @@ export class PaymentsService {
       },
     });
 
-    await this.trainingFlowService.transitionStatus({
-      userId,
-      nextStatus: TRAINING_STATUS.PAYMENT_WAITING,
-      actorId: 'SYSTEM',
-      metadata: {
-        action: 'UPLOAD_PAYMENT_PROOF',
-        filename: file.originalname,
-      },
-    });
+    // Tidak mengubah status (tetap ARTICLE_WAITING)
+    // Verifikasi dilakukan oleh ADMIN
 
     return {
-      message: 'Payment proof uploaded successfully',
+      message: 'Article uploaded successfully. Waiting for admin review.',
     };
   }
 }

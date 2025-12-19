@@ -3,11 +3,11 @@ import { IsString, IsOptional, IsDateString, IsPhoneNumber } from 'class-validat
 export class UpdateProfileDto {
   @IsString()
   @IsOptional()
-  firstName?: string;
+  fullName?: string;
 
   @IsString()
   @IsOptional()
-  lastName?: string;
+  nim?: string;
 
   @IsOptional()
   @IsPhoneNumber()
@@ -24,4 +24,12 @@ export class UpdateProfileDto {
   @IsDateString()
   @IsOptional()
   dateOfBirth?: string;
+
+  @IsString()
+  @IsOptional()
+  birthPlace?: string;
+
+  @IsString()
+  @IsOptional()
+  gender?: string;
 }

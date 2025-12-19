@@ -1,8 +1,19 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  UseGuards,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto, ChangePasswordDto } from './dto/auth.dto';
-import { Public } from './decorators/public.decorator';
+import { AuthGuard } from '@nestjs/passport';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { Public } from './decorators/public.decorator';
+import { RegisterDto, LoginDto, ChangePasswordDto } from './dto/auth.dto';
+import { RequestWithUser } from './types/request-with-user.type';
 
 @Controller('auth')
 export class AuthController {
@@ -10,28 +21,32 @@ export class AuthController {
 
   @Public()
   @Post('login')
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  @HttpCode(HttpStatus.OK)
+  async login(@Body() dto: LoginDto) {
+    return this.authService.login(dto.email, dto.password);
   }
 
   @Public()
   @Post('register')
-  register(@Body() dto: RegisterDto) {
+  async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
-  @Post('logout')
-  logout(@CurrentUser() user: { id: string }) {
-    return this.authService.logout(user.id);
+  @Post('refresh')
+  @UseGuards(AuthGuard('refresh'))
+  async refresh(@Req() req: RequestWithUser) {
+    const { userId, refreshToken } = req.user ?? {};
+    if (!userId || !refreshToken) throw new UnauthorizedException('Missing refresh token');
+    return this.authService.refresh(userId, refreshToken);
   }
 
-  @Get('me')
-  me(@CurrentUser() user: { id: string; email: string }) {
-    return user;
+  @Post('logout')
+  async logout(@CurrentUser('userId') userId: string) {
+    return this.authService.logout(userId);
   }
 
   @Post('change-password')
-  changePassword(@CurrentUser() user: { id: string }, @Body() dto: ChangePasswordDto) {
-    return this.authService.changePassword(user.id, dto);
+  async changePassword(@CurrentUser('userId') userId: string, @Body() dto: ChangePasswordDto) {
+    return this.authService.changePassword(userId, dto.oldPassword, dto.newPassword);
   }
 }

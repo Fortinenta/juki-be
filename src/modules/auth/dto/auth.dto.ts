@@ -1,37 +1,53 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsDateString, IsEmail, IsEnum, IsNotEmpty, IsString, MinLength } from 'class-validator';
+
 export class LoginDto {
   @IsEmail()
-  @IsNotEmpty()
-  email!: string;
+  email: string;
 
   @IsString()
-  @IsNotEmpty()
-  password!: string;
+  @MinLength(6)
+  password: string;
 }
+
 export class RegisterDto {
   @IsEmail()
-  @IsNotEmpty()
-  email!: string;
+  email: string;
 
   @IsString()
   @MinLength(6)
-  password!: string;
+  password: string;
 
   @IsString()
   @IsNotEmpty()
-  fullName!: string;
+  fullName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  nim: string;
+
+  @IsString()
+  @IsNotEmpty()
+  phone: string; // whatsapp or phone
+
+  @IsString()
+  @IsNotEmpty()
+  birthPlace: string;
+
+  @IsDateString()
+  birthDate: Date;
+
+  @IsEnum(['MALE', 'FEMALE']) // Asumsi enum gender di schema
+  gender: string;
+
+  // Tambah fields lain jika needed dari Profile (fakultas, jurusan, dll.)
 }
+
 export class ChangePasswordDto {
   @IsString()
-  @IsNotEmpty()
-  oldPassword!: string;
+  @MinLength(6)
+  oldPassword: string;
 
   @IsString()
   @MinLength(6)
-  newPassword!: string;
-}
-export class RefreshTokenDto {
-  @IsString()
-  @IsNotEmpty()
-  refreshToken!: string;
+  newPassword: string;
 }

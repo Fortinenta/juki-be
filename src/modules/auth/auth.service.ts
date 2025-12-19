@@ -1,160 +1,82 @@
-import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
-import { PrismaService } from '../../prisma/prisma.service';
+import * as bcrypt from 'bcryptjs';
+import { RegisterDto } from './dto/auth.dto';
 import { AuditAction, UserRole } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly jwtService: JwtService,
+    private prisma: PrismaService,
+    private jwtService: JwtService,
   ) {}
 
-  /* =========================
-   * REGISTER
-   * ========================= */
-  async register(data: {
-    email: string;
-    password: string;
-    fullName: string;
-    nim: string;
-    phone: string;
-    birthPlace: string;
-    birthDate: Date;
-    gender: string;
-  }) {
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: data.email },
-    });
-
-    if (existingUser) {
-      throw new BadRequestException('Email already registered');
+  async login(email: string, password: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      throw new UnauthorizedException('Invalid credentials');
     }
+    const accessToken = this.jwtService.sign({ userId: user.id, role: user.role });
+    const refreshToken = this.jwtService.sign({ userId: user.id }, { expiresIn: '7d' });
+    await this.prisma.auditLog.create({
+      data: { userId: user.id, action: AuditAction.LOGIN, metadata: { details: 'User logged in' } },
+    });
+    return { accessToken, refreshToken };
+  }
 
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-
+  async register(dto: RegisterDto) {
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
     const user = await this.prisma.user.create({
       data: {
-        email: data.email,
+        email: dto.email,
         password: hashedPassword,
         role: UserRole.USER,
-        profile: {
-          create: {
-            fullName: data.fullName,
-            nim: data.nim,
-            phone: data.phone,
-            birthPlace: data.birthPlace,
-            birthDate: data.birthDate,
-            gender: data.gender,
-          },
-        },
       },
     });
-
-    // 🔥 INI PENTING (FLOW WAJIB DIBUAT SAAT REGISTER)
+    await this.prisma.profile.create({
+      data: {
+        userId: user.id,
+        fullName: dto.fullName,
+        nim: dto.nim,
+        phone: dto.phone,
+        birthPlace: dto.birthPlace,
+        birthDate: dto.birthDate,
+        gender: dto.gender,
+      },
+    });
     await this.prisma.userTrainingFlow.create({
-      data: {
-        userId: user.id,
-        statusCode: 'PAYMENT_REQUIRED',
-        isLocked: false,
-      },
+      data: { userId: user.id, statusCode: 'PAYMENT_REQUIRED' },
     });
-
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: AuditAction.REGISTER,
-      },
-    });
-
-    return {
-      message: 'Registration successful',
-    };
+    return { message: 'Registered successfully' };
   }
 
-  /* =========================
-   * LOGIN
-   * ========================= */
-  async login(email: string, password: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-    });
+  async refresh(userId: string, refreshToken: string) {
+    this.jwtService.verify(refreshToken);
+    const newAccessToken = this.jwtService.sign({ userId });
+    return { accessToken: newAccessToken };
+  }
 
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+  async logout(userId: string) {
+    await this.prisma.auditLog.create({
+      data: { userId, action: AuditAction.LOGOUT, metadata: { details: 'User logged out' } },
+    });
+    return { message: 'Logged out' };
+  }
+
+  async changePassword(userId: string, oldPassword: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !(await bcrypt.compare(oldPassword, user.password))) {
+      throw new BadRequestException('Invalid old password');
     }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-    };
-
-    const accessToken = this.jwtService.sign(payload);
-    const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: '7d',
-    });
-
-    await this.prisma.session.create({
-      data: {
-        userId: user.id,
-        refreshToken,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
-
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: AuditAction.LOGIN,
-      },
-    });
-
-    return {
-      accessToken,
-      refreshToken,
-    };
-  }
-
-  /* =========================
-   * LOGOUT
-   * ========================= */
-  async logout(userId: string, refreshToken: string) {
-    await this.prisma.session.deleteMany({
-      where: {
-        userId,
-        refreshToken,
-      },
-    });
-
-    await this.prisma.auditLog.create({
-      data: {
-        userId,
-        action: AuditAction.LOGOUT,
-      },
-    });
-
-    return {
-      message: 'Logout successful',
-    };
-  }
-
-  /* =========================
-   * ME
-   * ========================= */
-  async me(userId: string) {
-    return this.prisma.user.findUnique({
+    const hashedNew = await bcrypt.hash(newPassword, 10);
+    await this.prisma.user.update({
       where: { id: userId },
-      include: {
-        profile: true,
-        trainingFlow: true,
-      },
+      data: { password: hashedNew },
     });
+    await this.prisma.auditLog.create({
+      data: { userId, action: AuditAction.UPDATE, metadata: { details: 'Password changed' } },
+    });
+    return { message: 'Password changed successfully' };
   }
 }

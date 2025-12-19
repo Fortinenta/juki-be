@@ -1,9 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
+import { UpdateProfileDto } from './dto/profiles.dto';
+import { Profile } from '@prisma/client';
 
 @Injectable()
 export class ProfilesService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async getByUserId(userId: string) {
     const profile = await this.prisma.profile.findUnique({
@@ -33,18 +35,16 @@ export class ProfilesService {
     });
   }
 
-  async createProfile(
-    userId: string,
-    data: {
-      fullName: string;
-      phone?: string;
-      avatarUrl?: string;
-    },
-  ) {
+  async create(userId: string, data: UpdateProfileDto): Promise<Profile> {
     return this.prisma.profile.create({
       data: {
         userId,
-        ...data,
+        fullName: data.fullName || '',
+        nim: data.nim || '',
+        phone: data.phoneNumber || '',
+        birthPlace: data.birthPlace || '',
+        birthDate: data.dateOfBirth || '',
+        gender: data.gender || '',
       },
     });
   }

@@ -1,149 +1,53 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { AuditLog, AuditAction } from '@prisma/client';
 import { QueryAuditLogsDto } from './dto/audit-logs.dto';
 
 @Injectable()
 export class AuditLogsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) {}
 
-  async findAll(query: QueryAuditLogsDto, currentUserRole: string) {
-    // Only admins can view all audit logs
-    if (currentUserRole !== 'ADMIN' && currentUserRole !== 'SUPER_ADMIN') {
-      throw new ForbiddenException('You do not have permission to view audit logs');
-    }
-
-    const { userId, action, startDate, endDate, page = 1, limit = 10 } = query;
-
-    const skip = (page - 1) * limit;
-    const take = limit;
-
-    const where: any = {};
-
-    if (userId) {
-      where.userId = userId;
-    }
-
-    if (action) {
-      where.action = action;
-    }
-
-    if (startDate || endDate) {
-      where.createdAt = {};
-      if (startDate) {
-        where.createdAt.gte = new Date(startDate);
-      }
-      if (endDate) {
-        where.createdAt.lte = new Date(endDate);
-      }
-    }
-
-    const [logs, total] = await Promise.all([
-      this.prisma.auditLog.findMany({
-        where,
-        skip,
-        take,
-        include: {
-          user: {
-            select: {
-              id: true,
-              email: true,
-              role: true,
-            },
-          },
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
-      this.prisma.auditLog.count({ where }),
-    ]);
-
-    return {
-      data: logs,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+  async findAll(query: QueryAuditLogsDto, _currentUserRole: string): Promise<AuditLog[]> {
+    return this.prisma.auditLog.findMany({
+      take: query.limit || 10,
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
-  async findByUserId(userId: string, currentUserId: string, currentUserRole: string) {
-    // Users can only view their own audit logs unless they're admins
-    if (
-      userId !== currentUserId &&
-      currentUserRole !== 'ADMIN' &&
-      currentUserRole !== 'SUPER_ADMIN'
-    ) {
-      throw new ForbiddenException('You can only view your own audit logs');
-    }
-
-    const logs = await this.prisma.auditLog.findMany({
-      where: { userId },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: 100, // Limit to last 100 logs
+  async getStats(_currentUserRole: string): Promise<{
+    total: number;
+    byAction: Array<{ action: AuditAction; _count: number }>;
+  }> {
+    const total = await this.prisma.auditLog.count();
+    const byAction = await this.prisma.auditLog.groupBy({
+      by: ['action'],
+      _count: { action: true },
     });
 
-    return logs;
-  }
-
-  async getStats(currentUserRole: string) {
-    // Only admins can view stats
-    if (currentUserRole !== 'ADMIN' && currentUserRole !== 'SUPER_ADMIN') {
-      throw new ForbiddenException('You do not have permission to view audit log stats');
-    }
-
-    const [totalLogs, todayLogs, loginCount, registerCount, profileUpdateCount] = await Promise.all(
-      [
-        this.prisma.auditLog.count(),
-        this.prisma.auditLog.count({
-          where: {
-            createdAt: {
-              gte: new Date(new Date().setHours(0, 0, 0, 0)),
-            },
-          },
-        }),
-        this.prisma.auditLog.count({
-          where: { action: 'LOGIN' },
-        }),
-        this.prisma.auditLog.count({
-          where: { action: 'REGISTER' },
-        }),
-        this.prisma.auditLog.count({
-          where: { action: 'UPDATE_PROFILE' },
-        }),
-      ],
-    );
-
+    // Ganti any → type eksplisit
     return {
-      total: totalLogs,
-      today: todayLogs,
-      byAction: {
-        login: loginCount,
-        register: registerCount,
-        profileUpdate: profileUpdateCount,
-      },
+      total,
+      byAction: byAction.map((item) => ({
+        action: item.action,
+        _count: item._count.action,
+      })),
     };
   }
 
-  async createLog(
-    userId: string,
-    action: string,
-    metadata?: any,
-    ipAddress?: string,
-    userAgent?: string,
-  ) {
+  async findByUserId(userId: string, currentUserId: string, role: string): Promise<AuditLog[]> {
+    if (role !== 'ADMIN' && role !== 'SUPER_ADMIN' && userId !== currentUserId) {
+      throw new Error('Unauthorized');
+    }
+    return this.prisma.auditLog.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async createLog(userId: string, action: AuditAction, details: string): Promise<AuditLog> {
     return this.prisma.auditLog.create({
-      data: {
-        userId,
-        action: action as any,
-        metadata,
-        ipAddress,
-        userAgent,
-      },
+      data: { userId, action, metadata: { details } },
     });
   }
 }

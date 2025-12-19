@@ -1,13 +1,12 @@
 import { Controller, Get, Query, Param, UseGuards } from '@nestjs/common';
 import { AuditLogsService } from './audit-logs.service';
+import { AuthGuard } from '@nestjs/passport';
+import { Roles } from 'src/common/decorators/roles.decorator';
 import { QueryAuditLogsDto } from './dto/audit-logs.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Controller('audit-logs')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(AuthGuard('jwt'))
 export class AuditLogsController {
   constructor(private readonly auditLogsService: AuditLogsService) {}
 
@@ -24,6 +23,7 @@ export class AuditLogsController {
   }
 
   @Get('user/:userId')
+  @Roles('ADMIN', 'SUPER_ADMIN')
   async findByUserId(
     @Param('userId') userId: string,
     @CurrentUser('userId') currentUserId: string,

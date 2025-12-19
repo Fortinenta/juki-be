@@ -1,41 +1,44 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { INestApplicationContext, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaClient } from '@prisma/client';
-import { LoggerService } from '../modules/logger/logger.service';
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
-  constructor(private readonly logger: LoggerService) {
+export class PrismaService extends PrismaClient implements OnModuleInit {
+  private readonly logger = new Logger(PrismaService.name);
+
+  constructor(config: ConfigService) {
     super({
+      datasources: {
+        db: {
+          url: config.get<string>('DATABASE_URL'),
+        },
+      },
       log: [
-        { level: 'warn', emit: 'event' },
-        { level: 'info', emit: 'event' },
-        { level: 'error', emit: 'event' },
-        { level: 'query', emit: 'event' },
+        { emit: 'stdout', level: 'query' },
+        { emit: 'stdout', level: 'info' },
+        { emit: 'stdout', level: 'warn' },
+        { emit: 'stdout', level: 'error' },
       ],
     });
   }
 
   async onModuleInit() {
-    this.$on('query', (e) => {
-      this.logger.debug(
-        `Prisma Query: ${e.query} -- Params: ${e.params} -- Duration: ${e.duration}ms`,
-        'PrismaService',
-      );
-    });
-    this.$on('info', (e) => {
-      this.logger.log(`Prisma Info: ${e.message}`, 'PrismaService');
-    });
-    this.$on('warn', (e) => {
-      this.logger.warn(`Prisma Warn: ${e.message}`, 'PrismaService');
-    });
-    this.$on('error', (e) => {
-      this.logger.error(`Prisma Error: ${e.message}`, e.target, 'PrismaService');
-    });
-
     await this.$connect();
   }
 
-  async onModuleDestroy() {
-    await this.$disconnect();
+  /**
+   * Prisma 5+ shutdown handling
+   * WAJIB pakai process hook, bukan prisma.$on
+   */
+  enableShutdownHooks(app: INestApplicationContext) {
+    process.on('SIGTERM', async () => {
+      this.logger.log('SIGTERM received. Closing application...');
+      await app.close();
+    });
+
+    process.on('SIGINT', async () => {
+      this.logger.log('SIGINT received. Closing application...');
+      await app.close();
+    });
   }
 }

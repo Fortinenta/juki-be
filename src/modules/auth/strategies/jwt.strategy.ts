@@ -7,15 +7,20 @@ export interface JwtPayload {
   sub: string;
   email: string;
   roles: string[];
-  status?: string;
 }
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(configService: ConfigService) {
+    const secret = configService.get<string>('JWT_ACCESS_SECRET');
+
+    if (!secret) {
+      throw new Error('JWT_ACCESS_SECRET is not defined');
+    }
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: configService.get<string>('JWT_SECRET'),
+      secretOrKey: secret,
     });
   }
 
@@ -24,7 +29,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       id: payload.sub,
       email: payload.email,
       roles: payload.roles,
-      status: payload.status,
     };
   }
 }

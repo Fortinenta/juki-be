@@ -16,6 +16,7 @@ enum UserRole {
 enum AuditAction {
   LOGIN
   LOGOUT
+  UPDATE
   REGISTER
   UPDATE_PROFILE
   UPDATE_PASSWORD
@@ -30,14 +31,6 @@ model User {
   password String
   role     UserRole @default(USER)
   isActive Boolean  @default(true)
-
-  profile      Profile?
-  sessions     Session[]
-  auditLogs    AuditLog[]
-  trainingFlow UserTrainingFlow?
-  attachments  Attachment[]
-  feedbacks    Feedback[]
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -58,46 +51,34 @@ model Profile {
   birthDate      DateTime
   gender         String
   ktmPath        String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@map("profiles")
 }
 
 model UserTrainingFlow {
-  id           String  @id @default(uuid())
-  userId       String  @unique
+  userId       String   @id
   statusCode   String
-  trainingId   String?
-  ojsAccountId String? @unique
+  trainingId   Int?
+  ojsAccountId String?  @unique
   articleTitle String?
   journalCode  String?
-  isLocked     Boolean @default(false)
+  isLocked     Boolean? @default(false)
   lockedReason String?
-
-  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status   LookupStatus @relation(fields: [statusCode], references: [code])
-  training Training?    @relation(fields: [trainingId], references: [id])
-  ojs      OjsAccount?  @relation(fields: [ojsAccountId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([statusCode])
   @@map("user_training_flows")
 }
 
 model LookupStatus {
-  code        String  @id
+  code        String   @id
   label       String
   step        Int
   description String?
-  isActive    Boolean @default(true)
-
-  flows UserTrainingFlow[]
+  isActive    Boolean  @default(true)
 
   @@map("lookup_status")
 }
@@ -112,10 +93,7 @@ model Training {
   journalCode String
   mentorName  String
   quota       Int
-
-  flows UserTrainingFlow[]
-
-  createdAt DateTime @default(now())
+  createdAt   DateTime @default(now())
 
   @@map("trainings")
 }
@@ -134,10 +112,7 @@ model OjsAccount {
   password    String
   journalCode String
   journalLink String
-
-  flow UserTrainingFlow?
-
-  createdAt DateTime @default(now())
+  createdAt   DateTime @default(now())
 
   @@map("ojs_accounts")
 }
@@ -150,10 +125,7 @@ model Attachment {
   mimeType     String
   originalName String?
   size         Int?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
+  createdAt    DateTime @default(now())
 
   @@index([userId, type])
   @@map("attachments")
@@ -163,19 +135,15 @@ model SystemConfig {
   key         String  @id
   value       String
   description String?
-
-  updatedAt DateTime @updatedAt
+  updatedAt   DateTime @updatedAt
 
   @@map("system_configs")
 }
 
 model Feedback {
-  id      String @id @default(uuid())
-  userId  String
-  message String
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  id        String @id @default(uuid())
+  userId    String
+  message   String
   createdAt DateTime @default(now())
 
   @@map("feedbacks")
@@ -188,11 +156,8 @@ model Session {
   userAgent    String?
   ipAddress    String?
   expiresAt    DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([userId])
   @@map("sessions")
@@ -205,9 +170,6 @@ model AuditLog {
   metadata  Json?
   ipAddress String?
   userAgent String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   createdAt DateTime @default(now())
 
   @@index([userId])

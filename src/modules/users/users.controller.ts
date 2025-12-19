@@ -1,26 +1,24 @@
-import { Controller, Get, Patch, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Delete, Param, Body, UseGuards, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto, QueryUsersDto } from './dto/users.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { AuthGuard } from '@nestjs/passport';
+import { Roles } from 'src/common/decorators/roles.decorator';
 
 @Controller('users')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(AuthGuard('jwt'))
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
-  @Get()
-  @Roles('ADMIN', 'SUPER_ADMIN')
-  async findAll(@Query() query: QueryUsersDto) {
-    return this.usersService.findAll(query);
-  }
 
   @Get('stats')
   @Roles('ADMIN', 'SUPER_ADMIN')
   async getStats() {
     return this.usersService.getStats();
+  }
+
+  @Get()
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  async findAll(@Query() query: QueryUsersDto) {
+    return this.usersService.findAll(query);
   }
 
   @Get(':id')
@@ -29,22 +27,14 @@ export class UsersController {
   }
 
   @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() dto: UpdateUserDto,
-    @CurrentUser('userId') currentUserId: string,
-    @CurrentUser('role') currentUserRole: string,
-  ) {
-    return this.usersService.update(id, dto, currentUserId, currentUserRole);
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+    return this.usersService.update(id, dto);
   }
 
   @Delete(':id')
   @Roles('ADMIN', 'SUPER_ADMIN')
-  async delete(
-    @Param('id') id: string,
-    @CurrentUser('userId') currentUserId: string,
-    @CurrentUser('role') currentUserRole: string,
-  ) {
-    return this.usersService.delete(id, currentUserId, currentUserRole);
+  async delete(@Param('id') id: string) {
+    return this.usersService.delete(id);
   }
 }

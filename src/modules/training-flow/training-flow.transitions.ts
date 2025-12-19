@@ -28,3 +28,14 @@ export const TRAINING_FLOW_TRANSITIONS: Record<string, string[]> = {
 
   [TRAINING_STATUS.LOA_WAITING]: [TRAINING_STATUS.LOA_PUBLISHED],
 };
+
+export interface TransitionContext {
+  userId: string;
+  actorRole: string;
+}
+
+export const transitionPaymentWaiting = async (context: TransitionContext) => {
+  // Logic: Update status to PAYMENT_WAITING, validasi PAYMENT_REQUIRED
+  console.log('Transition to PAYMENT_WAITING', context);
+  // Call TrainingFlowService.update
+};

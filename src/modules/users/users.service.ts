@@ -1,97 +1,37 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { User, UserRole } from '@prisma/client';
+import { UpdateUserDto, QueryUsersDto } from './dto/users.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private prisma: PrismaService) {}
 
-  async findAll() {
-    return this.prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        isActive: true,
-        createdAt: true,
-        profile: {
-          select: {
-            fullName: true,
-            phone: true,
-            avatarUrl: true,
-          },
-        },
-        roles: {
-          select: {
-            role: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
+  async findAll(query: QueryUsersDto): Promise<User[]> {
+    return this.prisma.user.findMany({ take: query.limit || 10 });
+  }
+
+  async getStats(): Promise<{ total: number }> {
+    return { total: await this.prisma.user.count() };
+  }
+
+  async findOne(id: string): Promise<User | null> {
+    return this.prisma.user.findUnique({ where: { id } });
+  }
+
+  async update(id: string, dto: UpdateUserDto): Promise<User> {
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        // Manual map dto ke data (untuk fix assignable)
+        email: dto.email,
+        role: dto.role as UserRole,
       },
     });
   }
 
-  async findById(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        isActive: true,
-        createdAt: true,
-        profile: true,
-        roles: {
-          select: {
-            role: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    return user;
-  }
-
-  async findByEmail(email: string) {
-    return this.prisma.user.findUnique({
-      where: { email },
-    });
-  }
-
-  async deactivate(userId: string) {
-    await this.ensureUserExists(userId);
-
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: { isActive: false },
-    });
-  }
-
-  async activate(userId: string) {
-    await this.ensureUserExists(userId);
-
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: { isActive: true },
-    });
-  }
-
-  private async ensureUserExists(userId: string): Promise<void> {
-    const exists = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true },
-    });
-
-    if (!exists) {
-      throw new NotFoundException('User not found');
-    }
+  async delete(id: string): Promise<{ message: string }> {
+    await this.prisma.user.delete({ where: { id } });
+    return { message: 'Deleted' };
   }
 }
