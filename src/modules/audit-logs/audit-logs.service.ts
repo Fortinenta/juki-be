@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuditLog, AuditAction } from '@prisma/client';
 import { QueryAuditLogsDto } from './dto/audit-logs.dto';
@@ -8,14 +8,14 @@ import { QueryAuditLogsDto } from './dto/audit-logs.dto';
 export class AuditLogsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(query: QueryAuditLogsDto, _currentUserRole: string): Promise<AuditLog[]> {
+  async findAll(query: QueryAuditLogsDto, _currentUserRoles: string[]): Promise<AuditLog[]> {
     return this.prisma.auditLog.findMany({
       take: query.limit || 10,
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async getStats(_currentUserRole: string): Promise<{
+  async getStats(_currentUserRoles: string[]): Promise<{
     total: number;
     byAction: Array<{ action: AuditAction; _count: number }>;
   }> {
@@ -25,7 +25,6 @@ export class AuditLogsService {
       _count: { action: true },
     });
 
-    // Ganti any → type eksplisit
     return {
       total,
       byAction: byAction.map((item) => ({
@@ -35,9 +34,11 @@ export class AuditLogsService {
     };
   }
 
-  async findByUserId(userId: string, currentUserId: string, role: string): Promise<AuditLog[]> {
-    if (role !== 'ADMIN' && role !== 'SUPER_ADMIN' && userId !== currentUserId) {
-      throw new Error('Unauthorized');
+  async findByUserId(userId: string, currentUserId: string, roles: string[]): Promise<AuditLog[]> {
+    const isAdmin = roles.includes('ADMIN') || roles.includes('SUPER_ADMIN');
+    
+    if (!isAdmin && userId !== currentUserId) {
+      throw new ForbiddenException('Unauthorized access to audit logs');
     }
     return this.prisma.auditLog.findMany({
       where: { userId },

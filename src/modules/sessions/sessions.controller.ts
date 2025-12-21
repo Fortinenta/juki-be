@@ -13,13 +13,13 @@ export class SessionsController {
   @Get('user/:userId')
   async findAllByUserId(
     @Param('userId') userId: string,
-    @CurrentUser('userId') currentUserId: string,
+    @CurrentUser('id') currentUserId: string,
   ) {
     return this.sessionsService.findAllByUserId(userId, currentUserId);
   }
 
   @Get('me')
-  async getMySession(@CurrentUser('userId') userId: string) {
+  async getMySession(@CurrentUser('id') userId: string) {
     return this.sessionsService.findAllByUserId(userId, userId);
   }
 
@@ -27,7 +27,7 @@ export class SessionsController {
   async revokeSession(
     @Param('sessionId') sessionId: string,
     @Param('userId') userId: string,
-    @CurrentUser('userId') currentUserId: string,
+    @CurrentUser('id') currentUserId: string,
   ) {
     return this.sessionsService.revokeSession(sessionId, userId, currentUserId);
   }
@@ -35,7 +35,7 @@ export class SessionsController {
   @Delete('user/:userId/all')
   async revokeAllSessions(
     @Param('userId') userId: string,
-    @CurrentUser('userId') currentUserId: string,
+    @CurrentUser('id') currentUserId: string,
   ) {
     return this.sessionsService.revokeAllSessions(userId, currentUserId);
   }

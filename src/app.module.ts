@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
-// import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
 import appConfig from './config/app.config';
 
@@ -17,6 +17,11 @@ import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { ArticlesModule } from './modules/articles/articles.module';
+import { AdminArticlesModule } from './modules/admin/admin-articles.module';
+import { AdminReviewLoaModule } from './modules/admin/admin-review-loa.module';
+import { PaymentsModule } from './modules/payments/payments.module';
+import { TrainingFlowModule } from './modules/training-flow/training-flow.module';
 
 @Module({
   imports: [
@@ -25,12 +30,13 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
       load: [appConfig],
       envFilePath: ['.env.local', '.env'],
     }),
-    // ThrottlerModule.forRoot([
-    //   {
-    //     ttl: 60000, // 60 seconds
-    //     limit: 100, // 100 requests per ttl
-    //   },
-    // ]),
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
     PrismaModule,
     LoggerModule,
     AuthModule,
@@ -39,9 +45,18 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
     ProfilesModule,
     AuditLogsModule,
     AdminModule,
+    ArticlesModule,
+    AdminArticlesModule,
+    AdminReviewLoaModule,
+    PaymentsModule,
+    TrainingFlowModule,
   ],
   controllers: [HealthController],
   providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

@@ -31,7 +31,7 @@ export class PaymentsService {
     await this.trainingFlowService.transitionStatus({
       userId,
       nextStatus: TRAINING_STATUS.PAYMENT_WAITING,
-      actorId: 'SYSTEM',
+      actorId: userId, // Changed from 'SYSTEM' to userId
       metadata: {
         action: 'UPLOAD_PAYMENT_PROOF',
         filename: file.originalname,

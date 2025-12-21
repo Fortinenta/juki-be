@@ -12,28 +12,28 @@ export class AuditLogsController {
 
   @Get()
   @Roles('ADMIN', 'SUPER_ADMIN')
-  async findAll(@Query() query: QueryAuditLogsDto, @CurrentUser('role') currentUserRole: string) {
-    return this.auditLogsService.findAll(query, currentUserRole);
+  async findAll(@Query() query: QueryAuditLogsDto, @CurrentUser('roles') currentUserRoles: string[]) {
+    return this.auditLogsService.findAll(query, currentUserRoles);
   }
 
   @Get('stats')
   @Roles('ADMIN', 'SUPER_ADMIN')
-  async getStats(@CurrentUser('role') currentUserRole: string) {
-    return this.auditLogsService.getStats(currentUserRole);
+  async getStats(@CurrentUser('roles') currentUserRoles: string[]) {
+    return this.auditLogsService.getStats(currentUserRoles);
   }
 
   @Get('user/:userId')
   @Roles('ADMIN', 'SUPER_ADMIN')
   async findByUserId(
     @Param('userId') userId: string,
-    @CurrentUser('userId') currentUserId: string,
-    @CurrentUser('role') currentUserRole: string,
+    @CurrentUser('id') currentUserId: string,
+    @CurrentUser('roles') currentUserRoles: string[],
   ) {
-    return this.auditLogsService.findByUserId(userId, currentUserId, currentUserRole);
+    return this.auditLogsService.findByUserId(userId, currentUserId, currentUserRoles);
   }
 
   @Get('me')
-  async getMyAuditLogs(@CurrentUser('userId') userId: string, @CurrentUser('role') role: string) {
-    return this.auditLogsService.findByUserId(userId, userId, role);
+  async getMyAuditLogs(@CurrentUser('id') userId: string, @CurrentUser('roles') roles: string[]) {
+    return this.auditLogsService.findByUserId(userId, userId, roles);
   }
 }

@@ -13,6 +13,13 @@ enum UserRole {
   SUPER_ADMIN
 }
 
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  DELETED
+}
+
 enum AuditAction {
   LOGIN
   LOGOUT
@@ -25,14 +32,28 @@ enum AuditAction {
   REVOKE_TOKEN
 }
 
+enum AttachmentType {
+  PAYMENT
+  KTM
+  ARTICLE
+  LOA
+}
+
 model User {
   id       String   @id @default(uuid())
   email    String   @unique
   password String
   role     UserRole @default(USER)
-  isActive Boolean  @default(true)
+  status   UserStatus @default(ACTIVE)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  profile          Profile?
+  trainingFlow     UserTrainingFlow?
+  sessions         Session[]
+  auditLogs        AuditLog[]
+  attachments      Attachment[]
+  feedbacks        Feedback[]
 
   @@map("users")
 }
@@ -40,6 +61,7 @@ model User {
 model Profile {
   id             String   @id @default(uuid())
   userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   fullName       String
   nim            String   @unique
   phone          String
@@ -59,17 +81,23 @@ model Profile {
 
 model UserTrainingFlow {
   userId       String   @id
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   statusCode   String
-  trainingId   Int?
+  status       LookupStatus @relation(fields: [statusCode], references: [code])
+  trainingId   String?
+  training     Training? @relation(fields: [trainingId], references: [id])
   ojsAccountId String?  @unique
+  ojsAccount   OjsAccount? @relation(fields: [ojsAccountId], references: [id])
   articleTitle String?
   journalCode  String?
   isLocked     Boolean? @default(false)
   lockedReason String?
+  version      Int      @default(1)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   @@index([statusCode])
+  @@index([trainingId])
   @@map("user_training_flows")
 }
 
@@ -79,6 +107,7 @@ model LookupStatus {
   step        Int
   description String?
   isActive    Boolean  @default(true)
+  flows       UserTrainingFlow[]
 
   @@map("lookup_status")
 }
@@ -94,6 +123,7 @@ model Training {
   mentorName  String
   quota       Int
   createdAt   DateTime @default(now())
+  flows       UserTrainingFlow[]
 
   @@map("trainings")
 }
@@ -113,6 +143,7 @@ model OjsAccount {
   journalCode String
   journalLink String
   createdAt   DateTime @default(now())
+  flow        UserTrainingFlow?
 
   @@map("ojs_accounts")
 }
@@ -120,7 +151,8 @@ model OjsAccount {
 model Attachment {
   id           String  @id @default(uuid())
   userId       String
-  type         String
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         AttachmentType
   filePath     String
   mimeType     String
   originalName String?
@@ -143,6 +175,7 @@ model SystemConfig {
 model Feedback {
   id        String @id @default(uuid())
   userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   message   String
   createdAt DateTime @default(now())
 
@@ -152,6 +185,7 @@ model Feedback {
 model Session {
   id           String   @id @default(uuid())
   userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   refreshToken String   @unique
   userAgent    String?
   ipAddress    String?
@@ -166,6 +200,7 @@ model Session {
 model AuditLog {
   id        String      @id @default(uuid())
   userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   action    AuditAction
   metadata  Json?
   ipAddress String?

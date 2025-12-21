@@ -34,12 +34,10 @@ export class RegisterDto {
   birthPlace: string;
 
   @IsDateString()
-  birthDate: Date;
+  birthDate: string;
 
-  @IsEnum(['MALE', 'FEMALE']) // Asumsi enum gender di schema
+  @IsEnum(['MALE', 'FEMALE'])
   gender: string;
-
-  // Tambah fields lain jika needed dari Profile (fakultas, jurusan, dll.)
 }
 
 export class ChangePasswordDto {

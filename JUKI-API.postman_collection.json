@@ -1,25 +1,45 @@
 {
   "info": {
-    "name": "JUKI API",
-    "description": "Complete API collection for JUKI Backend. This collection includes examples for all major endpoints and automatically handles authentication tokens.",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "name": "JUKI API - Final Version",
+    "description": "Koleksi API JUKI yang sudah disempurnakan.\n\n**Urutan Penggunaan:**\n1. **Auth > Register**: Membuat akun baru\n2. **Auth > Login**: Mendapatkan token\n3. **Profiles > Get My Profile**: Melihat status `trainingFlow` Anda\n4. **Payments > Upload**: Mengunggah bukti bayar\n5. **Admin > Flow Control > Verify Payment**: Admin memverifikasi pembayaran Anda\n6. ... dan seterusnya mengikuti alur pelatihan",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "12345678"
   },
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000/api/v1"
+      "value": "http://localhost:3000/api/v1",
+      "type": "string"
     },
     {
       "key": "accessToken",
-      "value": "<will_be_set_after_login>"
+      "value": "",
+      "type": "string"
     },
     {
       "key": "refreshToken",
-      "value": "<will_be_set_after_login>"
+      "value": "",
+      "type": "string"
     },
     {
       "key": "userId",
-      "value": "<will_be_set_after_login>"
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "targetUserId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "currentEmail",
+      "value": "user_123@juki.com",
+      "type": "string"
+    },
+    {
+      "key": "currentPassword",
+      "value": "User123!",
+      "type": "string"
     }
   ],
   "item": [
@@ -32,33 +52,31 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}",
-              "host": ["{{baseUrl}}"]
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
             },
-            "description": "Checks the health of the API. Should return a success message."
-          }
+            "description": "Mengecek status kesehatan API"
+          },
+          "response": []
         }
       ]
     },
     {
       "name": "Auth",
-      "description": "Handles user registration, login, and token management.",
       "item": [
         {
-          "name": "Register",
+          "name": "1. Register",
           "event": [
             {
-              "listen": "test",
+              "listen": "prerequest",
               "script": {
                 "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    const response = pm.response.json();",
-                  "    pm.collectionVariables.set('accessToken', response.tokens.accessToken);",
-                  "    pm.collectionVariables.set('refreshToken', response.tokens.refreshToken);",
-                  "    pm.collectionVariables.set('userId', response.user.id);",
-                  "    console.log('Registration successful. Tokens and userId saved.');",
-                  "}"
-                ]
+                  "const timestamp = new Date().getTime();",
+                  "const email = `user_${timestamp}@juki.com`;",
+                  "pm.collectionVariables.set(\"currentEmail\", email);"
+                ],
+                "type": "text/javascript"
               }
             }
           ],
@@ -72,7 +90,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"test.user@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\"\n}",
+              "raw": "{\n  \"email\": \"{{currentEmail}}\",\n  \"password\": \"{{currentPassword}}\",\n  \"fullName\": \"Test User {{currentEmail}}\",\n  \"nim\": \"{{$randomInt}}\",\n  \"phone\": \"0812{{$randomInt}}\",\n  \"birthPlace\": \"Jakarta\",\n  \"birthDate\": \"2000-01-01T00:00:00Z\",\n  \"gender\": \"MALE\",\n  \"faculty\": \"Teknik\",\n  \"major\": \"Informatika\",\n  \"studyProgram\": \"S1 TI\",\n  \"enrollmentYear\": 2023\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -84,24 +102,24 @@
               "host": ["{{baseUrl}}"],
               "path": ["auth", "register"]
             },
-            "description": "Register a new user account. On success, it automatically saves the `accessToken`, `refreshToken`, and `userId` to collection variables."
-          }
+            "description": "Membuat akun user baru dengan email yang di-generate otomatis"
+          },
+          "response": []
         },
         {
-          "name": "Login",
+          "name": "2. Login",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    const response = pm.response.json();",
-                  "    pm.collectionVariables.set('accessToken', response.tokens.accessToken);",
-                  "    pm.collectionVariables.set('refreshToken', response.tokens.refreshToken);",
-                  "    pm.collectionVariables.set('userId', response.user.id);",
-                  "    console.log('Login successful. Tokens and userId saved.');",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.accessToken) {",
+                  "    pm.collectionVariables.set(\"accessToken\", jsonData.accessToken);",
+                  "    pm.collectionVariables.set(\"refreshToken\", jsonData.refreshToken);",
                   "}"
-                ]
+                ],
+                "type": "text/javascript"
               }
             }
           ],
@@ -115,7 +133,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"test.user@example.com\",\n  \"password\": \"SecurePass123!\"\n}",
+              "raw": "{\n  \"email\": \"{{currentEmail}}\",\n  \"password\": \"{{currentPassword}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -127,31 +145,9 @@
               "host": ["{{baseUrl}}"],
               "path": ["auth", "login"]
             },
-            "description": "Login with an existing user. On success, it automatically saves the `accessToken`, `refreshToken`, and `userId` to collection variables."
-          }
-        },
-        {
-          "name": "Get Me (My Profile)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/auth/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "me"]
-            },
-            "description": "Retrieves the profile of the currently authenticated user based on the `accessToken`."
+            "description": "Login dan mendapatkan access token serta refresh token"
           },
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{accessToken}}",
-                "type": "string"
-              }
-            ]
-          }
+          "response": []
         },
         {
           "name": "Refresh Token",
@@ -161,12 +157,10 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 200) {",
-                  "    const response = pm.response.json();",
-                  "    pm.collectionVariables.set('accessToken', response.accessToken);",
-                  "    pm.collectionVariables.set('refreshToken', response.refreshToken);",
-                  "    console.log('Tokens refreshed successfully.');",
+                  "    pm.collectionVariables.set('accessToken', pm.response.json().accessToken);",
                   "}"
-                ]
+                ],
+                "type": "text/javascript"
               }
             }
           ],
@@ -174,63 +168,18 @@
             "method": "POST",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json"
+                "key": "Authorization",
+                "value": "Bearer {{refreshToken}}"
               }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
               "host": ["{{baseUrl}}"],
               "path": ["auth", "refresh"]
             },
-            "description": "Generates a new pair of access and refresh tokens. Uses the `refreshToken` saved from login/register."
-          }
-        },
-        {
-          "name": "Logout",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "logout"]
-            },
-            "description": "Logs the user out by invalidating the current session associated with the refresh token."
+            "description": "Memperbarui access token menggunakan refresh token"
           },
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{accessToken}}",
-                "type": "string"
-              }
-            ]
-          }
+          "response": []
         },
         {
           "name": "Change Password",
@@ -244,7 +193,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"currentPassword\": \"SecurePass123!\",\n  \"newPassword\": \"NewSecurePass456!\"\n}",
+              "raw": "{\n  \"oldPassword\": \"{{currentPassword}}\",\n  \"newPassword\": \"NewSecret123!\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -256,189 +205,45 @@
               "host": ["{{baseUrl}}"],
               "path": ["auth", "change-password"]
             },
-            "description": "Allows an authenticated user to change their own password."
+            "description": "Mengganti password akun"
           },
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{accessToken}}",
-                "type": "string"
-              }
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Users",
-      "description": "Endpoints for managing users. Most of these are restricted to ADMIN or SUPER_ADMIN roles.",
-      "item": [
-        {
-          "name": "List Users",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/users?page=1&limit=10&search=test&role=USER&status=ACTIVE",
-              "host": ["{{baseUrl}}"],
-              "path": ["users"],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "limit",
-                  "value": "10"
-                },
-                {
-                  "key": "search",
-                  "value": "test",
-                  "disabled": true
-                },
-                {
-                  "key": "role",
-                  "value": "USER",
-                  "description": "USER, ADMIN, SUPER_ADMIN",
-                  "disabled": true
-                },
-                {
-                  "key": "status",
-                  "value": "ACTIVE",
-                  "description": "ACTIVE, INACTIVE, SUSPENDED, DELETED",
-                  "disabled": true
-                }
-              ]
-            },
-            "description": "Lists all users with pagination. Supports filtering by search, role, and status. (Admin access required)"
-          },
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{accessToken}}",
-                "type": "string"
-              }
-            ]
-          }
+          "response": []
         },
         {
-          "name": "Get User Stats",
+          "name": "Logout",
           "request": {
-            "method": "GET",
+            "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/users/stats",
+              "raw": "{{baseUrl}}/auth/logout",
               "host": ["{{baseUrl}}"],
-              "path": ["users", "stats"]
+              "path": ["auth", "logout"]
             },
-            "description": "Returns statistics about user counts (total, active, suspended, etc.). (Admin access required)"
+            "description": "Logout dan menghapus session"
           },
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{accessToken}}",
-                "type": "string"
-              }
-            ]
-          }
-        },
-        {
-          "name": "Get User by ID",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/users/{{userId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", "{{userId}}"]
-            },
-            "description": "Retrieves a single user by their ID. The `{{userId}}` is automatically set after login. (Admin access required)"
-          },
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{accessToken}}",
-                "type": "string"
-              }
-            ]
-          }
-        },
-        {
-          "name": "Update User [Admin]",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"new.email@example.com\",\n  \"role\": \"ADMIN\",\n  \"status\": \"SUSPENDED\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/users/{{userId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", "{{userId}}"]
-            },
-            "description": "Updates a user's details. Only admins can use this. SUPER_ADMIN can change roles. `{{userId}}` is set from login, but you can change it to any user's ID."
-          },
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{accessToken}}",
-                "type": "string"
-              }
-            ]
-          }
-        },
-        {
-          "name": "Delete User [Admin]",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/users/{{userId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", "{{userId}}"]
-            },
-            "description": "Soft-deletes a user by setting their status to DELETED. You cannot delete yourself. (Admin access required)"
-          },
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{accessToken}}",
-                "type": "string"
-              }
-            ]
-          }
+          "response": []
         }
       ]
     },
     {
       "name": "Profiles",
-      "description": "Endpoints for managing user profiles.",
       "item": [
         {
           "name": "Get My Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.userId) {",
+                  "    pm.collectionVariables.set(\"userId\", jsonData.userId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
@@ -447,46 +252,14 @@
               "host": ["{{baseUrl}}"],
               "path": ["profiles", "me"]
             },
-            "description": "Gets the profile of the currently authenticated user."
+            "description": "Mendapatkan profil user yang sedang login. Gunakan ini untuk melihat status trainingFlow Anda (statusCode)."
           },
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{accessToken}}",
-                "type": "string"
-              }
-            ]
-          }
+          "response": []
         },
         {
-          "name": "Get Profile by User ID",
+          "name": "Update Profile",
           "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/profiles/{{userId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["profiles", "{{userId}}"]
-            },
-            "description": "Gets the profile for any user by their ID."
-          },
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{accessToken}}",
-                "type": "string"
-              }
-            ]
-          }
-        },
-        {
-          "name": "Update My Profile",
-          "request": {
-            "method": "PATCH",
+            "method": "PUT",
             "header": [
               {
                 "key": "Content-Type",
@@ -495,7 +268,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"firstName\": \"UpdatedFirst\",\n  \"lastName\": \"UpdatedLast\",\n  \"phoneNumber\": \"1234567890\",\n  \"bio\": \"This is my updated bio.\",\n  \"dateOfBirth\": \"1990-12-31T00:00:00.000Z\"\n}",
+              "raw": "{\n  \"fullName\": \"Juki User Updated\",\n  \"phone\": \"081299998888\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -503,54 +276,79 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/profiles/{{userId}}",
+              "raw": "{{baseUrl}}/profiles/me",
               "host": ["{{baseUrl}}"],
-              "path": ["profiles", "{{userId}}"]
+              "path": ["profiles", "me"]
             },
-            "description": "Update the profile of the currently authenticated user. The `{{userId}}` is automatically set after login."
+            "description": "Memperbarui informasi profil user"
           },
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{accessToken}}",
-                "type": "string"
-              }
-            ]
-          }
-        },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
         {
-          "name": "Delete My Avatar",
+          "name": "Upload Payment Proof",
           "request": {
-            "method": "DELETE",
+            "method": "POST",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/profiles/{{userId}}/avatar",
-              "host": ["{{baseUrl}}"],
-              "path": ["profiles", "{{userId}}", "avatar"]
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "description": "Gunakan file .jpg atau .png"
+                }
+              ]
             },
-            "description": "Deletes the avatar for the currently authenticated user. You can only delete your own avatar."
+            "url": {
+              "raw": "{{baseUrl}}/payments/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "upload"]
+            },
+            "description": "Mengunggah bukti pembayaran pelatihan"
           },
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{accessToken}}",
-                "type": "string"
-              }
-            ]
-          }
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Articles",
+      "item": [
+        {
+          "name": "Upload Article",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "description": "Gunakan file .pdf"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/articles/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["articles", "upload"]
+            },
+            "description": "Mengunggah artikel untuk review"
+          },
+          "response": []
         }
       ]
     },
     {
       "name": "Sessions",
-      "description": "Endpoints for managing user sessions.",
       "item": [
         {
-          "name": "Get My Sessions",
+          "name": "Get Active Sessions",
           "request": {
             "method": "GET",
             "header": [],
@@ -559,162 +357,288 @@
               "host": ["{{baseUrl}}"],
               "path": ["sessions", "me"]
             },
-            "description": "Retrieves all active sessions for the currently authenticated user."
+            "description": "Mendapatkan daftar session aktif user"
           },
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{accessToken}}",
-                "type": "string"
-              }
-            ]
-          }
-        },
-        {
-          "name": "Revoke All My Sessions",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/sessions/me/all",
-              "host": ["{{baseUrl}}"],
-              "path": ["sessions", "me", "all"]
-            },
-            "description": "Revokes all sessions for the currently authenticated user, effectively logging them out everywhere."
-          },
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{accessToken}}",
-                "type": "string"
-              }
-            ]
-          }
-        },
-        {
-          "name": "Revoke Session by ID [Admin]",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/sessions/<session_id_here>",
-              "host": ["{{baseUrl}}"],
-              "path": ["sessions", "<session_id_here>"]
-            },
-            "description": "Revokes a specific session by its ID. You would get the session ID from 'Get My Sessions'. (Admin access required)"
-          },
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{accessToken}}",
-                "type": "string"
-              }
-            ]
-          }
+          "response": []
         }
       ]
     },
     {
-      "name": "Audit Logs",
-      "description": "Endpoints for viewing audit logs. (Admin access required)",
+      "name": "Admin",
       "item": [
         {
-          "name": "Get My Audit Logs",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/audit-logs/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["audit-logs", "me"]
+          "name": "User Management",
+          "item": [
+            {
+              "name": "List Users",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const jsonData = pm.response.json();",
+                      "if (jsonData.data && jsonData.data.length > 0) {",
+                      "    pm.collectionVariables.set(\"targetUserId\", jsonData.data[0].id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/users?page=1&limit=10&status=ACTIVE",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["users"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "status",
+                      "value": "ACTIVE"
+                    },
+                    {
+                      "key": "search",
+                      "value": "",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "description": "Mendapatkan daftar semua user dengan pagination dan filter"
+              },
+              "response": []
             },
-            "description": "Gets audit logs for the currently authenticated user."
-          },
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{accessToken}}",
-                "type": "string"
-              }
-            ]
-          }
+            {
+              "name": "Get User Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/users/{{targetUserId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["users", "{{targetUserId}}"]
+                },
+                "description": "Mendapatkan detail user berdasarkan ID"
+              },
+              "response": []
+            },
+            {
+              "name": "Update User Status/Role",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"ACTIVE\",\n  \"role\": \"ADMIN\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/users/{{targetUserId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["users", "{{targetUserId}}"]
+                },
+                "description": "Memperbarui status atau role user"
+              },
+              "response": []
+            }
+          ]
         },
         {
-          "name": "Get Audit Logs by User ID [Admin]",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/audit-logs/user/{{userId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["audit-logs", "user", "{{userId}}"]
+          "name": "Flow Control",
+          "item": [
+            {
+              "name": "Verify Payment",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/payments/{{targetUserId}}/verify",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "payments", "{{targetUserId}}", "verify"]
+                },
+                "description": "Admin memverifikasi pembayaran user"
+              },
+              "response": []
             },
-            "description": "Gets audit logs for a specific user by their ID."
-          },
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{accessToken}}",
-                "type": "string"
-              }
-            ]
-          }
+            {
+              "name": "Complete Administrative",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/administrative/{{targetUserId}}/complete",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "administrative", "{{targetUserId}}", "complete"]
+                },
+                "description": "Menyelesaikan proses administratif user"
+              },
+              "response": []
+            },
+            {
+              "name": "Setup OJS Account",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"ojs_user_test\",\n  \"password\": \"pass123\",\n  \"journalCode\": \"JUKI-VOL1\",\n  \"journalLink\": \"https://journal.juki.com\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/administrative/{{targetUserId}}/ojs",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "administrative", "{{targetUserId}}", "ojs"]
+                },
+                "description": "Membuat akun OJS untuk user"
+              },
+              "response": []
+            },
+            {
+              "name": "Verify Article (OJS Check)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"comment\": \"Article confirmed in OJS system.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/articles/{{targetUserId}}/verify",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "articles", "{{targetUserId}}", "verify"]
+                },
+                "description": "Memverifikasi artikel yang telah diupload di sistem OJS"
+              },
+              "response": []
+            },
+            {
+              "name": "Accept Review & Finalize",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"comment\": \"Final review passed.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/review-loa/{{targetUserId}}/review/accept",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "review-loa", "{{targetUserId}}", "review", "accept"]
+                },
+                "description": "Menerima hasil review final dan memfinalisasi proses"
+              },
+              "response": []
+            },
+            {
+              "name": "Upload LOA (Final Step)",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "description": "PDF LOA (Letter of Acceptance)"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/review-loa/{{targetUserId}}/loa/upload",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "review-loa", "{{targetUserId}}", "loa", "upload"]
+                },
+                "description": "Mengunggah Letter of Acceptance (LOA) sebagai langkah terakhir"
+              },
+              "response": []
+            }
+          ]
         },
         {
-          "name": "Get All Audit Logs [Admin]",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/audit-logs",
-              "host": ["{{baseUrl}}"],
-              "path": ["audit-logs"]
+          "name": "Audit Logs",
+          "item": [
+            {
+              "name": "System Audit Logs",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/audit-logs?limit=50",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["audit-logs"],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "50"
+                    }
+                  ]
+                },
+                "description": "Mendapatkan daftar audit logs sistem"
+              },
+              "response": []
             },
-            "description": "Gets all audit logs with pagination."
-          },
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{accessToken}}",
-                "type": "string"
-              }
-            ]
-          }
-        },
-        {
-          "name": "Get Audit Stats [Admin]",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/audit-logs/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["audit-logs", "stats"]
-            },
-            "description": "Gets statistics about audit log actions."
-          },
-          "auth": {
-            "type": "bearer",
-            "bearer": [
-              {
-                "key": "token",
-                "value": "{{accessToken}}",
-                "type": "string"
-              }
-            ]
-          }
+            {
+              "name": "Audit Stats",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/audit-logs/stats",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["audit-logs", "stats"]
+                },
+                "description": "Mendapatkan statistik audit logs"
+              },
+              "response": []
+            }
+          ]
         }
       ]
     }
