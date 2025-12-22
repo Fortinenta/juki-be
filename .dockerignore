@@ -13,3 +13,5 @@ README.md
 coverage
 .nyc_output
 *.log
+uploads
+test

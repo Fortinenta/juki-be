@@ -31,7 +31,36 @@ A secure, scalable, and state-machine-driven NestJS backend API for managing stu
 - pnpm (recommended) or npm
 - PostgreSQL >= 14
 
-## ⚙️ Installation & Setup
+## 🐳 Installation & Setup with Docker
+
+The easiest way to run the JUKI Backend is using Docker. This will set up both the API and the PostgreSQL database automatically.
+
+1. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   cd juki
+   ```
+
+2. **Configure Environment**:
+   ```bash
+   cp .env.example .env
+   ```
+   *Note: When using Docker, the `DATABASE_URL` in `.env` should point to the `postgres` service:*
+   `DATABASE_URL="postgresql://juki:juki123@postgres:5432/juki_db?schema=public"`
+
+3. **Run with Docker Compose**:
+   ```bash
+   docker-compose up --build -d
+   ```
+
+4. **Seed the Database** (Only required once):
+   ```bash
+   docker exec -it juki-api pnpm prisma:seed
+   ```
+
+The API will be available at `http://localhost:3000/api/v1`.
+
+## ⚙️ Local Installation & Setup (Without Docker)
 
 1. **Clone the repository**:
    ```bash
