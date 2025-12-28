@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "JUKI API - Final Version",
-    "description": "Koleksi API JUKI yang sudah disempurnakan.\n\n**Urutan Penggunaan:**\n1. **Auth > Register**: Membuat akun baru\n2. **Auth > Login**: Mendapatkan token\n3. **Profiles > Get My Profile**: Melihat status `trainingFlow` Anda\n4. **Payments > Upload**: Mengunggah bukti bayar\n5. **Admin > Flow Control > Verify Payment**: Admin memverifikasi pembayaran Anda\n6. ... dan seterusnya mengikuti alur pelatihan",
+    "description": "Koleksi API JUKI yang sudah disempurnakan dan dikelompokkan berdasarkan role.\n\n**Urutan Penggunaan Umum:**\n1. **Public > Register**: Membuat akun baru\n2. **Public > Login**: Mendapatkan token\n3. **User > Profile > Get My Profile**: Melihat status `trainingFlow` dan `OJS Account`\n4. **Public > Settings > Get Public Settings**: Melihat info pembayaran\n5. **User > Payments > Upload**: Mengunggah bukti bayar\n6. **Admin > Flow Control > Verify Payment**: Admin memverifikasi/menolak pembayaran\n7. **User > Administrative > Confirm**: User konfirmasi sudah isi form eksternal\n8. **Admin > Flow Control > Setup OJS Account**: Admin membuat akun OJS (Otomatis verifikasi tahap admin)\n9. **User > Articles > Upload Article**: Upload artikel\n10. **Admin > Flow Control > Verify Article**: Admin verifikasi artikel\n11. **User > Trainings > Select Training**: User memilih jadwal training\n12. ... dan seterusnya mengikuti alur pelatihan hingga LOA terbit\n13. **User > Articles > Download LOA**: Mengunduh LOA final",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "12345678"
   },
@@ -32,6 +32,11 @@
       "type": "string"
     },
     {
+      "key": "selectedTrainingId",
+      "value": "",
+      "type": "string"
+    },
+    {
       "key": "currentEmail",
       "value": "user_123@juki.com",
       "type": "string"
@@ -44,7 +49,7 @@
   ],
   "item": [
     {
-      "name": "Health",
+      "name": "Public (No Login Required)",
       "item": [
         {
           "name": "Health Check",
@@ -59,14 +64,9 @@
             "description": "Mengecek status kesehatan API"
           },
           "response": []
-        }
-      ]
-    },
-    {
-      "name": "Auth",
-      "item": [
+        },
         {
-          "name": "1. Register",
+          "name": "Register",
           "event": [
             {
               "listen": "prerequest",
@@ -107,7 +107,7 @@
           "response": []
         },
         {
-          "name": "2. Login",
+          "name": "Login",
           "event": [
             {
               "listen": "test",
@@ -150,94 +150,15 @@
           "response": []
         },
         {
-          "name": "Refresh Token",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    pm.collectionVariables.set('accessToken', pm.response.json().accessToken);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{refreshToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
-            },
-            "description": "Memperbarui access token menggunakan refresh token"
-          },
-          "response": []
-        },
-        {
-          "name": "Change Password",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"oldPassword\": \"{{currentPassword}}\",\n  \"newPassword\": \"NewSecret123!\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/change-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "change-password"]
-            },
-            "description": "Mengganti password akun"
-          },
-          "response": []
-        },
-        {
-          "name": "Logout",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "logout"]
-            },
-            "description": "Logout dan menghapus session"
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Profiles",
-      "item": [
-        {
-          "name": "Get My Profile",
+          "name": "List Available Trainings",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
                   "const jsonData = pm.response.json();",
-                  "if (jsonData.userId) {",
-                  "    pm.collectionVariables.set(\"userId\", jsonData.userId);",
+                  "if (jsonData.length > 0) {",
+                  "    pm.collectionVariables.set(\"selectedTrainingId\", jsonData[0].id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -248,123 +169,324 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/profiles/me",
+              "raw": "{{baseUrl}}/trainings",
               "host": ["{{baseUrl}}"],
-              "path": ["profiles", "me"]
+              "path": ["trainings"]
             },
-            "description": "Mendapatkan profil user yang sedang login. Gunakan ini untuk melihat status trainingFlow Anda (statusCode)."
+            "description": "Mendapatkan daftar jadwal training yang tersedia (kuota > 0 & belum lewat)"
           },
           "response": []
         },
         {
-          "name": "Update Profile",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Juki User Updated\",\n  \"phone\": \"081299998888\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/profiles/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["profiles", "me"]
-            },
-            "description": "Memperbarui informasi profil user"
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Payments",
-      "item": [
-        {
-          "name": "Upload Payment Proof",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "file",
-                  "type": "file",
-                  "description": "Gunakan file .jpg atau .png"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/payments/upload",
-              "host": ["{{baseUrl}}"],
-              "path": ["payments", "upload"]
-            },
-            "description": "Mengunggah bukti pembayaran pelatihan"
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Articles",
-      "item": [
-        {
-          "name": "Upload Article",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "file",
-                  "type": "file",
-                  "description": "Gunakan file .pdf"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseUrl}}/articles/upload",
-              "host": ["{{baseUrl}}"],
-              "path": ["articles", "upload"]
-            },
-            "description": "Mengunggah artikel untuk review"
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Sessions",
-      "item": [
-        {
-          "name": "Get Active Sessions",
+          "name": "Get Training Detail",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/sessions/me",
+              "raw": "{{baseUrl}}/trainings/{{selectedTrainingId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["sessions", "me"]
+              "path": ["trainings", "{{selectedTrainingId}}"]
             },
-            "description": "Mendapatkan daftar session aktif user"
+            "description": "Mendapatkan detail dari satu jadwal training"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Public Settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/settings",
+              "host": ["{{baseUrl}}"],
+              "path": ["settings"]
+            },
+            "description": "Mendapatkan konfigurasi publik sistem seperti info rekening dan link form"
           },
           "response": []
         }
       ]
     },
     {
-      "name": "Admin",
+      "name": "User (Logged In)",
+      "item": [
+        {
+          "name": "Profile",
+          "item": [
+            {
+              "name": "Get My Profile",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const jsonData = pm.response.json();",
+                      "if (jsonData.userId) {",
+                      "    pm.collectionVariables.set(\"userId\", jsonData.userId);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/profiles/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["profiles", "me"]
+                },
+                "description": "Mendapatkan profil user yang sedang login. Return ini juga berisi detail `trainingFlow` dan `ojsAccount`."
+              },
+              "response": []
+            },
+            {
+              "name": "Update Profile",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"fullName\": \"Juki User Updated\",\n  \"phone\": \"081299998888\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/profiles/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["profiles", "me"]
+                },
+                "description": "Memperbarui informasi profil user"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Auth Management",
+          "item": [
+            {
+              "name": "Refresh Token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    pm.collectionVariables.set('accessToken', pm.response.json().accessToken);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{refreshToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/refresh",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "refresh"]
+                },
+                "description": "Memperbarui access token menggunakan refresh token"
+              },
+              "response": []
+            },
+            {
+              "name": "Change Password",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"oldPassword\": \"{{currentPassword}}\",\n  \"newPassword\": \"NewSecret123!\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/change-password",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "change-password"]
+                },
+                "description": "Mengganti password akun"
+              },
+              "response": []
+            },
+            {
+              "name": "Logout",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/logout",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "logout"]
+                },
+                "description": "Logout dan menghapus session"
+              },
+              "response": []
+            },
+            {
+              "name": "Get Active Sessions",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/sessions/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["sessions", "me"]
+                },
+                "description": "Mendapatkan daftar session aktif user"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Payments",
+          "item": [
+            {
+              "name": "Upload Payment Proof",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "description": "Gunakan file .jpg atau .png"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/payments/upload",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["payments", "upload"]
+                },
+                "description": "Mengunggah bukti pembayaran pelatihan"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Administrative (User)",
+          "item": [
+            {
+              "name": "Confirm Form Submission",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/administrative/confirm",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["administrative", "confirm"]
+                },
+                "description": "User mengonfirmasi telah mengisi form eksternal. Status berubah menjadi WAITING_ADMINISTRATIVE"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Articles & Training",
+          "item": [
+            {
+              "name": "Upload Article",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "description": "Gunakan file .pdf"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/articles/upload",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["articles", "upload"]
+                },
+                "description": "Mengunggah artikel untuk review"
+              },
+              "response": []
+            },
+            {
+              "name": "Select Training Batch",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/trainings/{{selectedTrainingId}}/select",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["trainings", "{{selectedTrainingId}}", "select"]
+                },
+                "description": "User memilih jadwal training. Syarat: Status user harus ARTICLE_VERIFIED"
+              },
+              "response": []
+            },
+            {
+              "name": "Download LOA",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/articles/loa",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["articles", "loa"]
+                },
+                "description": "Mengunduh file LOA jika status sudah LOA_PUBLISHED"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "My Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/audit-logs/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["audit-logs", "me"]
+            },
+            "description": "Mendapatkan audit log aktivitas user sendiri"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin / Super Admin",
       "item": [
         {
           "name": "User Management",
@@ -457,6 +579,20 @@
                 "description": "Memperbarui status atau role user"
               },
               "response": []
+            },
+            {
+              "name": "Get User Stats",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/users/stats",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["users", "stats"]
+                },
+                "description": "Mendapatkan statistik user"
+              },
+              "response": []
             }
           ]
         },
@@ -464,30 +600,30 @@
           "name": "Flow Control",
           "item": [
             {
-              "name": "Verify Payment",
+              "name": "Verify Payment (Accept/Reject)",
               "request": {
                 "method": "POST",
-                "header": [],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"ACCEPT\",\n  \"reason\": \"Optional reason if rejected\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/admin/payments/{{targetUserId}}/verify",
                   "host": ["{{baseUrl}}"],
                   "path": ["admin", "payments", "{{targetUserId}}", "verify"]
                 },
-                "description": "Admin memverifikasi pembayaran user"
-              },
-              "response": []
-            },
-            {
-              "name": "Complete Administrative",
-              "request": {
-                "method": "POST",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/admin/administrative/{{targetUserId}}/complete",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "administrative", "{{targetUserId}}", "complete"]
-                },
-                "description": "Menyelesaikan proses administratif user"
+                "description": "Admin memverifikasi (ACCEPT) atau menolak (REJECT) pembayaran user."
               },
               "response": []
             },
@@ -515,7 +651,7 @@
                   "host": ["{{baseUrl}}"],
                   "path": ["admin", "administrative", "{{targetUserId}}", "ojs"]
                 },
-                "description": "Membuat akun OJS untuk user"
+                "description": "Membuat akun OJS untuk user. Pastikan user sudah di tahap WAITING_ADMINISTRATIVE"
               },
               "response": []
             },
@@ -596,6 +732,39 @@
                   "path": ["admin", "review-loa", "{{targetUserId}}", "loa", "upload"]
                 },
                 "description": "Mengunggah Letter of Acceptance (LOA) sebagai langkah terakhir"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "System Settings",
+          "item": [
+            {
+              "name": "Update Settings (Admin)",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"payment_bank_name\": \"Bank BNI\",\n  \"payment_amount\": \"200000\",\n  \"admin_form_link\": \"https://new-form-link.com\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/settings",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["settings"]
+                },
+                "description": "Mengupdate konfigurasi sistem (Hanya Admin)"
               },
               "response": []
             }

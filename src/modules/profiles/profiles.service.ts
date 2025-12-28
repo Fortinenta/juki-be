@@ -10,6 +10,17 @@ export class ProfilesService {
   async getByUserId(userId: string) {
     const profile = await this.prisma.profile.findUnique({
       where: { userId },
+      include: {
+        user: {
+          select: {
+            trainingFlow: {
+              include: {
+                ojsAccount: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!profile) {

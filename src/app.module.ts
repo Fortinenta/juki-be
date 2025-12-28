@@ -22,6 +22,9 @@ import { AdminArticlesModule } from './modules/admin/admin-articles.module';
 import { AdminReviewLoaModule } from './modules/admin/admin-review-loa.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { TrainingFlowModule } from './modules/training-flow/training-flow.module';
+import { TrainingsModule } from './modules/trainings/trainings.module';
+import { SettingsModule } from './modules/settings/settings.module';
+import { AdministrativeModule } from './modules/administrative/administrative.module';
 
 @Module({
   imports: [
@@ -50,6 +53,9 @@ import { TrainingFlowModule } from './modules/training-flow/training-flow.module
     AdminReviewLoaModule,
     PaymentsModule,
     TrainingFlowModule,
+    TrainingsModule,
+    SettingsModule,
+    AdministrativeModule,
   ],
   controllers: [HealthController],
   providers: [
