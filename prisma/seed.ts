@@ -29,14 +29,22 @@ const TRAINING_STATUS = {
 async function main() {
   console.log('🌱 Seeding database...');
 
-  // Seed LookupStatus
+  // --- 1. Lookup Status ---
   console.log('Populating LookupStatus...');
   const statuses = [
     { code: TRAINING_STATUS.PAYMENT_REQUIRED, label: 'Payment Required', step: 1 },
     { code: TRAINING_STATUS.PAYMENT_WAITING, label: 'Payment Waiting Verification', step: 1 },
     { code: TRAINING_STATUS.PAYMENT_VERIFIED, label: 'Payment Verified', step: 1 },
-    { code: TRAINING_STATUS.ADMINISTRATIVE_REQUIRED, label: 'Administrative Data Required', step: 2 },
-    { code: TRAINING_STATUS.WAITING_ADMINISTRATIVE, label: 'Waiting Administrative Verification', step: 2 },
+    {
+      code: TRAINING_STATUS.ADMINISTRATIVE_REQUIRED,
+      label: 'Administrative Data Required',
+      step: 2,
+    },
+    {
+      code: TRAINING_STATUS.WAITING_ADMINISTRATIVE,
+      label: 'Waiting Administrative Verification',
+      step: 2,
+    },
     { code: TRAINING_STATUS.ARTICLE_WAITING, label: 'Article Upload Required', step: 3 },
     { code: TRAINING_STATUS.ARTICLE_VERIFIED, label: 'Article Verified', step: 3 },
     { code: TRAINING_STATUS.TRAINING_WAITING, label: 'Waiting for Training', step: 4 },
@@ -53,19 +61,15 @@ async function main() {
     await prisma.lookupStatus.upsert({
       where: { code: status.code },
       update: {},
-      create: {
-        code: status.code,
-        label: status.label,
-        step: status.step,
-      },
+      create: status,
     });
   }
   console.log('✅ LookupStatus seeded');
 
-
-  // Create Super Admin
+  // --- 2. Users ---
+  // Create Admins
   const superAdminPassword = await bcrypt.hash('SuperAdmin123!', 10);
-  const superAdmin = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: 'superadmin@juki.com' },
     update: {},
     create: {
@@ -86,11 +90,8 @@ async function main() {
     },
   });
 
-  console.log('✅ Created Super Admin:', superAdmin.email);
-
-  // Create Admin
   const adminPassword = await bcrypt.hash('Admin123!', 10);
-  const admin = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: 'admin@juki.com' },
     update: {},
     create: {
@@ -111,58 +112,177 @@ async function main() {
     },
   });
 
-  console.log('✅ Created Admin:', admin.email);
-
-  // Create Regular User
+  // Create Dummy Users
   const userPassword = await bcrypt.hash('User123!', 10);
-  const user = await prisma.user.upsert({
-    where: { email: 'user@juki.com' },
-    update: {},
-    create: {
+  const usersData = [
+    {
       email: 'user@juki.com',
-      password: userPassword,
-      role: 'USER',
-      status: 'ACTIVE',
-      profile: {
-        create: {
-          fullName: 'Regular User',
-          nim: 'USER001',
-          phone: '08222222222',
-          birthPlace: 'Bandung',
-          birthDate: new Date('1995-05-05'),
-          gender: 'MALE',
+      name: 'Fresh User',
+      nim: 'USER001',
+      status: TRAINING_STATUS.PAYMENT_REQUIRED,
+    },
+    {
+      email: 'user2@juki.com',
+      name: 'User Juki 2',
+      nim: 'USER002',
+      status: TRAINING_STATUS.PAYMENT_REQUIRED,
+    },
+  ];
+
+  for (const u of usersData) {
+    const user = await prisma.user.upsert({
+      where: { email: u.email },
+      update: {},
+      create: {
+        email: u.email,
+        password: userPassword,
+        role: 'USER',
+        status: 'ACTIVE',
+        profile: {
+          create: {
+            fullName: u.name,
+            nim: u.nim,
+            phone: `08${u.nim}`,
+            birthPlace: 'Indonesia',
+            birthDate: new Date('2000-01-01'),
+            gender: 'MALE',
+          },
         },
+      },
+    });
+
+    // Ensure Flow Exists & Update Status
+    const existingFlow = await prisma.userTrainingFlow.findUnique({ where: { userId: user.id } });
+    if (!existingFlow) {
+      await prisma.userTrainingFlow.create({
+        data: { userId: user.id, statusCode: u.status },
+      });
+    } else {
+      await prisma.userTrainingFlow.update({
+        where: { userId: user.id },
+        data: { statusCode: u.status, trainingId: null }, // Reset trainingId for testing
+      });
+    }
+  }
+  console.log('✅ Users seeded');
+
+  // --- 3. Training Schedules (HARD RESET) ---
+  console.log('Cleaning up old dummy trainings...');
+  // Hapus training yang batch-nya dimulai dengan 'BATCH-' agar bersih
+  await prisma.training.deleteMany({
+    where: {
+      batch: {
+        startsWith: 'BATCH-',
       },
     },
   });
 
-  // Create Flow for Regular User if not exists
-  const existingFlow = await prisma.userTrainingFlow.findUnique({
-    where: { userId: user.id },
-  });
+  console.log('Creating fresh Training Schedules...');
+  const today = new Date();
 
-  if (!existingFlow) {
-    await prisma.userTrainingFlow.create({
-      data: {
-        userId: user.id,
-        statusCode: TRAINING_STATUS.PAYMENT_REQUIRED,
-      },
-    });
-    console.log('✅ Created Flow for User');
+  // Helper to add hours
+  const addHours = (date: Date, h: number) => new Date(date.getTime() + h * 60 * 60 * 1000);
+  const addDays = (date: Date, d: number) => {
+    const newDate = new Date(date);
+    newDate.setDate(date.getDate() + d);
+    return newDate;
+  };
+
+  const trainings = [
+    {
+      batch: 'BATCH-PAST',
+      title: 'Pelatihan Jurnal (Sudah Lewat)',
+      startAt: addDays(today, -2), // 2 hari lalu
+      endAt: addDays(today, -1),
+      location: 'Zoom Meeting',
+      journalCode: 'JUKI-VOL1',
+      mentorName: 'Dr. Strange',
+      quota: 100,
+    },
+    {
+      batch: 'BATCH-TODAY-FUTURE',
+      title: 'Pelatihan Jurnal (Hari Ini - Nanti Sore)',
+      startAt: addHours(today, 5), // 5 jam dari sekarang (Pasti Future)
+      endAt: addHours(today, 8),
+      location: 'Google Meet',
+      journalCode: 'JUKI-VOL1',
+      mentorName: 'Prof. X',
+      quota: 50,
+    },
+    {
+      batch: 'BATCH-TOMORROW',
+      title: 'Pelatihan Jurnal (Besok)',
+      startAt: addDays(today, 1), // Besok
+      endAt: addHours(addDays(today, 1), 3),
+      location: 'Zoom Meeting',
+      journalCode: 'JUKI-VOL2',
+      mentorName: 'Tony Stark',
+      quota: 50,
+    },
+    {
+      batch: 'BATCH-NEXT-WEEK',
+      title: 'Pelatihan Jurnal (Minggu Depan)',
+      startAt: addDays(today, 7),
+      endAt: addHours(addDays(today, 7), 4),
+      location: 'Offline - Aula Utama',
+      journalCode: 'JUKI-VOL2',
+      mentorName: 'Bruce Banner',
+      quota: 200,
+    },
+    {
+      batch: 'BATCH-FULL-QUOTA',
+      title: 'Pelatihan Jurnal (Penuh)',
+      startAt: addDays(today, 2),
+      endAt: addHours(addDays(today, 2), 2),
+      location: 'Small Room',
+      journalCode: 'JUKI-VOL3',
+      mentorName: 'Full Man',
+      quota: 0, // Kuota habis
+    },
+  ];
+
+  for (const t of trainings) {
+    await prisma.training.create({ data: t });
   }
+  console.log(`✅ Created ${trainings.length} Fresh Training Schedules`);
 
-  console.log('✅ Created User:', user.email);
+  // --- 4. System Configs ---
+  console.log('Seeding System Configs...');
+  const configs = [
+    { key: 'payment_bank_name', value: 'Bank BRI', description: 'Nama Bank Tujuan Pembayaran' },
+    {
+      key: 'payment_account_number',
+      value: '1234-5678-9000-0000',
+      description: 'Nomor Rekening Tujuan',
+    },
+    {
+      key: 'payment_account_name',
+      value: 'Yayasan Jurnal Kita',
+      description: 'Nama Pemilik Rekening',
+    },
+    { key: 'payment_amount', value: '150000', description: 'Nominal Pembayaran Pelatihan' },
+    {
+      key: 'admin_form_link',
+      value: 'https://forms.google.com/sample-form-link',
+      description: 'Link Google Form Administratif',
+    },
+  ];
 
-  console.log('\n Seeding completed successfully!');
-  console.log('\n Default Accounts:');
-  console.log('Super Admin: superadmin@juki.com / SuperAdmin123!');
-  console.log('Admin: admin@juki.com / Admin123!');
-  console.log('User: user@juki.com / User123!');
+  for (const c of configs) {
+    await prisma.systemConfig.upsert({
+      where: { key: c.key },
+      update: {},
+      create: c,
+    });
+  }
+  console.log('✅ System Configs seeded');
+
+  console.log('Seeding finished.');
 }
 
 main()
   .catch((e) => {
-    console.error(' Error during seeding:', e);
+    console.error(e);
     process.exit(1);
   })
   .finally(async () => {

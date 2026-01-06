@@ -1,16 +1,17 @@
-import { Post, UseGuards, UseInterceptors, UploadedFile, Req, Controller, BadRequestException } from '@nestjs/common';
+import { Post, Get, UseGuards, UseInterceptors, UploadedFile, Req, Controller, BadRequestException, StreamableFile, Res, NotFoundException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FlowStatusGuard } from '../../common/guards/flow-status.guard';
 import { FlowStatus } from '../../common/decorators/flow-status.decorator';
 import { ArticlesService } from './articles.service';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { TRAINING_STATUS } from '../../common/constants/training-status.constants';
 import { JwtUser } from '../auth/types/jwt-user.type';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
+import { createReadStream } from 'fs';
 
 @Controller('articles')
 @UseGuards(JwtAuthGuard, FlowStatusGuard)
@@ -68,5 +69,22 @@ export class ArticlesController {
       userId,
       file,
     });
+  }
+
+  @Get('loa')
+  async downloadLoa(@Req() req: any, @Res({ passthrough: true }) res: Response) {
+    const userId = req.user.id;
+    const loa = await this.articlesService.getLoaFile(userId);
+
+    if (!fs.existsSync(loa.path)) {
+      throw new NotFoundException('LOA file not found on server');
+    }
+
+    const file = createReadStream(loa.path);
+    res.set({
+      'Content-Type': loa.mimeType,
+      'Content-Disposition': `attachment; filename="${loa.filename}"`,
+    });
+    return new StreamableFile(file);
   }
 }

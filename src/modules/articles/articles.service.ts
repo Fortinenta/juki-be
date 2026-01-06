@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TrainingFlowService } from '../training-flow/training-flow.service';
 // import { TRAINING_STATUS } from '../../common/constants/training-status.constants';
@@ -39,6 +39,26 @@ export class ArticlesService {
 
     return {
       message: 'Article uploaded successfully. Waiting for admin review.',
+    };
+  }
+
+  async getLoaFile(userId: string) {
+    const loa = await this.prisma.attachment.findFirst({
+      where: {
+        userId,
+        type: 'LOA',
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!loa) {
+      throw new NotFoundException('LOA not found for this user');
+    }
+
+    return {
+      path: loa.filePath,
+      mimeType: loa.mimeType,
+      filename: loa.originalName || 'LOA.pdf',
     };
   }
 }
