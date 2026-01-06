@@ -25,6 +25,8 @@ import { TrainingFlowModule } from './modules/training-flow/training-flow.module
 import { TrainingsModule } from './modules/trainings/trainings.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { AdministrativeModule } from './modules/administrative/administrative.module';
+import { FeedbacksModule } from './modules/feedbacks/feedbacks.module';
+import { AttachmentsModule } from './modules/attachments/attachments.module';
 
 @Module({
   imports: [
@@ -56,6 +58,8 @@ import { AdministrativeModule } from './modules/administrative/administrative.mo
     TrainingsModule,
     SettingsModule,
     AdministrativeModule,
+    FeedbacksModule,
+    AttachmentsModule,
   ],
   controllers: [HealthController],
   providers: [

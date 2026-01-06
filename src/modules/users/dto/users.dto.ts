@@ -1,17 +1,42 @@
 import { IsEmail, IsEnum, IsOptional, IsString } from 'class-validator';
+import { UserRole, UserStatus } from '@prisma/client';
 
 export class UpdateUserDto {
   @IsEmail()
   @IsOptional()
   email?: string;
 
-  @IsEnum(['USER', 'ADMIN', 'SUPER_ADMIN'])
+  @IsEnum(UserRole)
   @IsOptional()
-  role?: string;
+  role?: UserRole;
 
-  @IsEnum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'DELETED'])
+  @IsEnum(UserStatus)
   @IsOptional()
-  status?: string;
+  status?: UserStatus;
+
+  @IsOptional()
+  @IsString()
+  fullName?: string;
+
+  @IsOptional()
+  @IsString()
+  nim?: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  birthPlace?: string;
+
+  @IsOptional()
+  @IsString()
+  birthDate?: string;
+
+  @IsOptional()
+  @IsString()
+  gender?: string;
 }
 
 export class QueryUsersDto {
@@ -20,12 +45,12 @@ export class QueryUsersDto {
   search?: string;
 
   @IsOptional()
-  @IsEnum(['USER', 'ADMIN', 'SUPER_ADMIN'])
-  role?: string;
+  @IsEnum(UserRole)
+  role?: UserRole;
 
   @IsOptional()
-  @IsEnum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'DELETED'])
-  status?: string;
+  @IsEnum(UserStatus)
+  status?: UserStatus;
 
   @IsOptional()
   page?: number = 1;

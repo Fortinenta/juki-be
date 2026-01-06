@@ -14,6 +14,13 @@ export class TrainingsController {
     return this.trainingsService.getAvailableTrainings();
   }
 
+  @Get('my-training')
+  @UseGuards(JwtAuthGuard)
+  async getMyTraining(@Req() req: any) {
+    const userId = req.user.id;
+    return this.trainingsService.getMyTraining(userId);
+  }
+
   @Public()
   @Get(':id')
   async getTrainingById(@Param('id') id: string) {

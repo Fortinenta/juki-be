@@ -4,6 +4,9 @@ import { UpdateUserDto, QueryUsersDto } from './dto/users.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles } from 'src/common/decorators/roles.decorator';
 
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { JwtUser } from '../auth/types/jwt-user.type';
+
 @Controller('users')
 @UseGuards(AuthGuard('jwt'))
 export class UsersController {
@@ -17,8 +20,8 @@ export class UsersController {
 
   @Get()
   @Roles('ADMIN', 'SUPER_ADMIN')
-  async findAll(@Query() query: QueryUsersDto) {
-    return this.usersService.findAll(query);
+  async findAll(@Query() query: QueryUsersDto, @CurrentUser() user: JwtUser) {
+    return this.usersService.findAll(query, user.roles);
   }
 
   @Get(':id')

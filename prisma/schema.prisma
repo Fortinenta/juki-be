@@ -37,6 +37,7 @@ enum AttachmentType {
   KTM
   ARTICLE
   LOA
+  BEBAS_TANGGUNGAN
 }
 
 model User {

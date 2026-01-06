@@ -15,8 +15,13 @@ export class AdminReviewLoaService {
       where: { userId },
     });
 
-    if (!flow || flow.statusCode !== TRAINING_STATUS.TRAINING_VERIFIED) {
-      throw new BadRequestException('Invalid flow state');
+    const allowedStatuses = [
+      TRAINING_STATUS.TRAINING_VERIFIED,
+      TRAINING_STATUS.REVIEW_WAITING,
+    ];
+
+    if (!flow || !allowedStatuses.includes(flow.statusCode as any)) {
+      throw new BadRequestException('Invalid flow state for accepting review');
     }
 
     await this.trainingFlowService.transitionStatus({
@@ -40,8 +45,13 @@ export class AdminReviewLoaService {
       where: { userId },
     });
 
-    if (!flow || flow.statusCode !== TRAINING_STATUS.TRAINING_VERIFIED) {
-      throw new BadRequestException('Invalid flow state');
+    const allowedStatuses = [
+      TRAINING_STATUS.TRAINING_VERIFIED,
+      TRAINING_STATUS.REVIEW_WAITING,
+    ];
+
+    if (!flow || !allowedStatuses.includes(flow.statusCode as any)) {
+      throw new BadRequestException('Invalid flow state for revision request');
     }
 
     await this.trainingFlowService.transitionStatus({

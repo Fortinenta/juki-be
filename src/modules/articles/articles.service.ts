@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TrainingFlowService } from '../training-flow/training-flow.service';
-// import { TRAINING_STATUS } from '../../common/constants/training-status.constants';
+import { TRAINING_STATUS } from '../../common/constants/training-status.constants';
 
 @Injectable()
 export class ArticlesService {
@@ -11,35 +11,56 @@ export class ArticlesService {
   ) {}
 
   /**
-   * Upload artikel oleh mahasiswa
-   * - Simpan ke Attachment
-   * - Status tetap ARTICLE_WAITING (menunggu verifikasi admin)
+   * User confirms they have submitted the article to external OJS
+   * Status remains ARTICLE_WAITING until verified by Admin
    */
-  async uploadArticle(params: { userId: string; file: Express.Multer.File }) {
-    const { userId, file } = params;
-
-    if (!file) {
-      throw new BadRequestException('Article file is required');
-    }
-
-    // Simpan attachment artikel
-    await this.prisma.attachment.create({
-      data: {
-        userId,
-        type: 'ARTICLE',
-        filePath: file.path,
-        mimeType: file.mimetype,
-        originalName: file.originalname,
-        size: file.size,
-      },
+  async confirmSubmission(userId: string, articleTitle: string) {
+    const flow = await this.prisma.userTrainingFlow.findUnique({
+      where: { userId },
     });
 
-    // Tidak mengubah status (tetap ARTICLE_WAITING)
-    // Verifikasi dilakukan oleh ADMIN
+    if (!flow || flow.statusCode !== TRAINING_STATUS.ARTICLE_WAITING) {
+      throw new BadRequestException('Action not allowed in current status');
+    }
+
+    await this.prisma.userTrainingFlow.update({
+      where: { userId },
+      data: { articleTitle },
+    });
+
+    await this.trainingFlowService.transitionStatus({
+      userId,
+      nextStatus: TRAINING_STATUS.ARTICLE_WAITING,
+      actorId: userId,
+      metadata: { action: 'CONFIRM_OJS_SUBMISSION', articleTitle },
+    });
 
     return {
-      message: 'Article uploaded successfully. Waiting for admin review.',
+      message: 'Submission confirmed. Admin will verify your article in OJS.',
     };
+  }
+
+  /**
+   * User confirm revision done on external OJS
+   * Status: REVIEW_REVISION -> REVIEW_WAITING
+   */
+  async confirmRevision(userId: string) {
+    const flow = await this.prisma.userTrainingFlow.findUnique({
+      where: { userId },
+    });
+
+    if (!flow || flow.statusCode !== TRAINING_STATUS.REVIEW_REVISION) {
+      throw new BadRequestException('Action not allowed in current status');
+    }
+
+    await this.trainingFlowService.transitionStatus({
+      userId,
+      nextStatus: TRAINING_STATUS.REVIEW_WAITING,
+      actorId: userId,
+      metadata: { action: 'CONFIRM_REVISION_DONE' },
+    });
+
+    return { message: 'Revision confirmed. Waiting for admin review.' };
   }
 
   async getLoaFile(userId: string) {

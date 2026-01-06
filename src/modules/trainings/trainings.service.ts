@@ -56,8 +56,10 @@ export class TrainingsService {
     // Pastikan user berada di tahap yang benar untuk memilih jadwal
     // Idealnya setelah ARTICLE_VERIFIED, user memilih jadwal
     // Jika user sudah TRAINING_WAITING tapi belum punya trainingId (migrasi data lama), kita izinkan juga
+    // Jika user TRAINING_RESCHEDULE (tidak hadir sebelumnya), juga diizinkan
     if (
-      flow.statusCode !== TRAINING_STATUS.ARTICLE_VERIFIED && 
+      flow.statusCode !== TRAINING_STATUS.ARTICLE_VERIFIED &&
+      flow.statusCode !== TRAINING_STATUS.TRAINING_RESCHEDULE &&
       !(flow.statusCode === TRAINING_STATUS.TRAINING_WAITING && flow.trainingId === null)
     ) {
       throw new BadRequestException(
@@ -114,5 +116,32 @@ export class TrainingsService {
       
       return updatedFlow;
     });
+  }
+
+  /**
+   * Get training details for the logged-in user
+   */
+  async getMyTraining(userId: string) {
+    const flow = await this.prisma.userTrainingFlow.findUnique({
+      where: { userId },
+      include: {
+        training: true,
+        status: true,
+      },
+    });
+
+    if (!flow || !flow.trainingId) {
+      return {
+        hasTraining: false,
+        flowStatus: flow?.status || null,
+        training: null,
+      };
+    }
+
+    return {
+      hasTraining: true,
+      flowStatus: flow.status,
+      training: flow.training,
+    };
   }
 }

@@ -1,825 +1,1452 @@
 {
-  "info": {
-    "name": "JUKI API - Final Version",
-    "description": "Koleksi API JUKI yang sudah disempurnakan dan dikelompokkan berdasarkan role.\n\n**Urutan Penggunaan Umum:**\n1. **Public > Register**: Membuat akun baru\n2. **Public > Login**: Mendapatkan token\n3. **User > Profile > Get My Profile**: Melihat status `trainingFlow` dan `OJS Account`\n4. **Public > Settings > Get Public Settings**: Melihat info pembayaran\n5. **User > Payments > Upload**: Mengunggah bukti bayar\n6. **Admin > Flow Control > Verify Payment**: Admin memverifikasi/menolak pembayaran\n7. **User > Administrative > Confirm**: User konfirmasi sudah isi form eksternal\n8. **Admin > Flow Control > Setup OJS Account**: Admin membuat akun OJS (Otomatis verifikasi tahap admin)\n9. **User > Articles > Upload Article**: Upload artikel\n10. **Admin > Flow Control > Verify Article**: Admin verifikasi artikel\n11. **User > Trainings > Select Training**: User memilih jadwal training\n12. ... dan seterusnya mengikuti alur pelatihan hingga LOA terbit\n13. **User > Articles > Download LOA**: Mengunduh LOA final",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "12345678"
-  },
-  "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:3000/api/v1",
-      "type": "string"
-    },
-    {
-      "key": "accessToken",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "refreshToken",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "userId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "targetUserId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "selectedTrainingId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "currentEmail",
-      "value": "user_123@juki.com",
-      "type": "string"
-    },
-    {
-      "key": "currentPassword",
-      "value": "User123!",
-      "type": "string"
-    }
-  ],
-  "item": [
-    {
-      "name": "Public (No Login Required)",
-      "item": [
-        {
-          "name": "Health Check",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["health"]
-            },
-            "description": "Mengecek status kesehatan API"
-          },
-          "response": []
-        },
-        {
-          "name": "Register",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  "const timestamp = new Date().getTime();",
-                  "const email = `user_${timestamp}@juki.com`;",
-                  "pm.collectionVariables.set(\"currentEmail\", email);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{currentEmail}}\",\n  \"password\": \"{{currentPassword}}\",\n  \"fullName\": \"Test User {{currentEmail}}\",\n  \"nim\": \"{{$randomInt}}\",\n  \"phone\": \"0812{{$randomInt}}\",\n  \"birthPlace\": \"Jakarta\",\n  \"birthDate\": \"2000-01-01T00:00:00Z\",\n  \"gender\": \"MALE\",\n  \"faculty\": \"Teknik\",\n  \"major\": \"Informatika\",\n  \"studyProgram\": \"S1 TI\",\n  \"enrollmentYear\": 2023\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
-            },
-            "description": "Membuat akun user baru dengan email yang di-generate otomatis"
-          },
-          "response": []
-        },
-        {
-          "name": "Login",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const jsonData = pm.response.json();",
-                  "if (jsonData.accessToken) {",
-                  "    pm.collectionVariables.set(\"accessToken\", jsonData.accessToken);",
-                  "    pm.collectionVariables.set(\"refreshToken\", jsonData.refreshToken);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{currentEmail}}\",\n  \"password\": \"{{currentPassword}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
-            },
-            "description": "Login dan mendapatkan access token serta refresh token"
-          },
-          "response": []
-        },
-        {
-          "name": "List Available Trainings",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const jsonData = pm.response.json();",
-                  "if (jsonData.length > 0) {",
-                  "    pm.collectionVariables.set(\"selectedTrainingId\", jsonData[0].id);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/trainings",
-              "host": ["{{baseUrl}}"],
-              "path": ["trainings"]
-            },
-            "description": "Mendapatkan daftar jadwal training yang tersedia (kuota > 0 & belum lewat)"
-          },
-          "response": []
-        },
-        {
-          "name": "Get Training Detail",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/trainings/{{selectedTrainingId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["trainings", "{{selectedTrainingId}}"]
-            },
-            "description": "Mendapatkan detail dari satu jadwal training"
-          },
-          "response": []
-        },
-        {
-          "name": "Get Public Settings",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/settings",
-              "host": ["{{baseUrl}}"],
-              "path": ["settings"]
-            },
-            "description": "Mendapatkan konfigurasi publik sistem seperti info rekening dan link form"
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "User (Logged In)",
-      "item": [
-        {
-          "name": "Profile",
-          "item": [
-            {
-              "name": "Get My Profile",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "const jsonData = pm.response.json();",
-                      "if (jsonData.userId) {",
-                      "    pm.collectionVariables.set(\"userId\", jsonData.userId);",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/profiles/me",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["profiles", "me"]
-                },
-                "description": "Mendapatkan profil user yang sedang login. Return ini juga berisi detail `trainingFlow` dan `ojsAccount`."
-              },
-              "response": []
-            },
-            {
-              "name": "Update Profile",
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"fullName\": \"Juki User Updated\",\n  \"phone\": \"081299998888\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/profiles/me",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["profiles", "me"]
-                },
-                "description": "Memperbarui informasi profil user"
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "Auth Management",
-          "item": [
-            {
-              "name": "Refresh Token",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "if (pm.response.code === 200) {",
-                      "    pm.collectionVariables.set('accessToken', pm.response.json().accessToken);",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{refreshToken}}"
-                  }
-                ],
-                "url": {
-                  "raw": "{{baseUrl}}/auth/refresh",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["auth", "refresh"]
-                },
-                "description": "Memperbarui access token menggunakan refresh token"
-              },
-              "response": []
-            },
-            {
-              "name": "Change Password",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"oldPassword\": \"{{currentPassword}}\",\n  \"newPassword\": \"NewSecret123!\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/auth/change-password",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["auth", "change-password"]
-                },
-                "description": "Mengganti password akun"
-              },
-              "response": []
-            },
-            {
-              "name": "Logout",
-              "request": {
-                "method": "POST",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/auth/logout",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["auth", "logout"]
-                },
-                "description": "Logout dan menghapus session"
-              },
-              "response": []
-            },
-            {
-              "name": "Get Active Sessions",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/sessions/me",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["sessions", "me"]
-                },
-                "description": "Mendapatkan daftar session aktif user"
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "Payments",
-          "item": [
-            {
-              "name": "Upload Payment Proof",
-              "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "file",
-                      "type": "file",
-                      "description": "Gunakan file .jpg atau .png"
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/payments/upload",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["payments", "upload"]
-                },
-                "description": "Mengunggah bukti pembayaran pelatihan"
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "Administrative (User)",
-          "item": [
-            {
-              "name": "Confirm Form Submission",
-              "request": {
-                "method": "POST",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/administrative/confirm",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["administrative", "confirm"]
-                },
-                "description": "User mengonfirmasi telah mengisi form eksternal. Status berubah menjadi WAITING_ADMINISTRATIVE"
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "Articles & Training",
-          "item": [
-            {
-              "name": "Upload Article",
-              "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "file",
-                      "type": "file",
-                      "description": "Gunakan file .pdf"
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/articles/upload",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["articles", "upload"]
-                },
-                "description": "Mengunggah artikel untuk review"
-              },
-              "response": []
-            },
-            {
-              "name": "Select Training Batch",
-              "request": {
-                "method": "POST",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/trainings/{{selectedTrainingId}}/select",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["trainings", "{{selectedTrainingId}}", "select"]
-                },
-                "description": "User memilih jadwal training. Syarat: Status user harus ARTICLE_VERIFIED"
-              },
-              "response": []
-            },
-            {
-              "name": "Download LOA",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/articles/loa",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["articles", "loa"]
-                },
-                "description": "Mengunduh file LOA jika status sudah LOA_PUBLISHED"
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "My Audit Logs",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/audit-logs/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["audit-logs", "me"]
-            },
-            "description": "Mendapatkan audit log aktivitas user sendiri"
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Admin / Super Admin",
-      "item": [
-        {
-          "name": "User Management",
-          "item": [
-            {
-              "name": "List Users",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "const jsonData = pm.response.json();",
-                      "if (jsonData.data && jsonData.data.length > 0) {",
-                      "    pm.collectionVariables.set(\"targetUserId\", jsonData.data[0].id);",
-                      "}"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/users?page=1&limit=10&status=ACTIVE",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["users"],
-                  "query": [
-                    {
-                      "key": "page",
-                      "value": "1"
-                    },
-                    {
-                      "key": "limit",
-                      "value": "10"
-                    },
-                    {
-                      "key": "status",
-                      "value": "ACTIVE"
-                    },
-                    {
-                      "key": "search",
-                      "value": "",
-                      "disabled": true
-                    }
-                  ]
-                },
-                "description": "Mendapatkan daftar semua user dengan pagination dan filter"
-              },
-              "response": []
-            },
-            {
-              "name": "Get User Details",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/users/{{targetUserId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["users", "{{targetUserId}}"]
-                },
-                "description": "Mendapatkan detail user berdasarkan ID"
-              },
-              "response": []
-            },
-            {
-              "name": "Update User Status/Role",
-              "request": {
-                "method": "PATCH",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"status\": \"ACTIVE\",\n  \"role\": \"ADMIN\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/users/{{targetUserId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["users", "{{targetUserId}}"]
-                },
-                "description": "Memperbarui status atau role user"
-              },
-              "response": []
-            },
-            {
-              "name": "Get User Stats",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/users/stats",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["users", "stats"]
-                },
-                "description": "Mendapatkan statistik user"
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "Flow Control",
-          "item": [
-            {
-              "name": "Verify Payment (Accept/Reject)",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"action\": \"ACCEPT\",\n  \"reason\": \"Optional reason if rejected\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/admin/payments/{{targetUserId}}/verify",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "payments", "{{targetUserId}}", "verify"]
-                },
-                "description": "Admin memverifikasi (ACCEPT) atau menolak (REJECT) pembayaran user."
-              },
-              "response": []
-            },
-            {
-              "name": "Setup OJS Account",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"username\": \"ojs_user_test\",\n  \"password\": \"pass123\",\n  \"journalCode\": \"JUKI-VOL1\",\n  \"journalLink\": \"https://journal.juki.com\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/admin/administrative/{{targetUserId}}/ojs",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "administrative", "{{targetUserId}}", "ojs"]
-                },
-                "description": "Membuat akun OJS untuk user. Pastikan user sudah di tahap WAITING_ADMINISTRATIVE"
-              },
-              "response": []
-            },
-            {
-              "name": "Verify Article (OJS Check)",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"comment\": \"Article confirmed in OJS system.\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/admin/articles/{{targetUserId}}/verify",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "articles", "{{targetUserId}}", "verify"]
-                },
-                "description": "Memverifikasi artikel yang telah diupload di sistem OJS"
-              },
-              "response": []
-            },
-            {
-              "name": "Accept Review & Finalize",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"comment\": \"Final review passed.\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/admin/review-loa/{{targetUserId}}/review/accept",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "review-loa", "{{targetUserId}}", "review", "accept"]
-                },
-                "description": "Menerima hasil review final dan memfinalisasi proses"
-              },
-              "response": []
-            },
-            {
-              "name": "Upload LOA (Final Step)",
-              "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "file",
-                      "type": "file",
-                      "description": "PDF LOA (Letter of Acceptance)"
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/admin/review-loa/{{targetUserId}}/loa/upload",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "review-loa", "{{targetUserId}}", "loa", "upload"]
-                },
-                "description": "Mengunggah Letter of Acceptance (LOA) sebagai langkah terakhir"
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "System Settings",
-          "item": [
-            {
-              "name": "Update Settings (Admin)",
-              "request": {
-                "method": "PATCH",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"payment_bank_name\": \"Bank BNI\",\n  \"payment_amount\": \"200000\",\n  \"admin_form_link\": \"https://new-form-link.com\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/settings",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["settings"]
-                },
-                "description": "Mengupdate konfigurasi sistem (Hanya Admin)"
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "Audit Logs",
-          "item": [
-            {
-              "name": "System Audit Logs",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/audit-logs?limit=50",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["audit-logs"],
-                  "query": [
-                    {
-                      "key": "limit",
-                      "value": "50"
-                    }
-                  ]
-                },
-                "description": "Mendapatkan daftar audit logs sistem"
-              },
-              "response": []
-            },
-            {
-              "name": "Audit Stats",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/audit-logs/stats",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["audit-logs", "stats"]
-                },
-                "description": "Mendapatkan statistik audit logs"
-              },
-              "response": []
-            }
-          ]
-        }
-      ]
-    }
-  ],
-  "auth": {
-    "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{accessToken}}",
-        "type": "string"
-      }
-    ]
-  }
+	"info": {
+		"_postman_id": "8481523c-d389-482a-a551-3932267b2038",
+		"name": "JUKI API",
+		"description": "API Documentation for JUKI Backend. Includes flows for Public, User, Admin, and Super Admin.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login (Super Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.environment.set(\"access_token\", jsonData.accessToken);",
+									"pm.environment.set(\"refresh_token\", jsonData.refreshToken);",
+									"pm.environment.set(\"user_id\", jsonData.user.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"superadmin@juki.com\",\n    \"password\": \"SuperAdmin123!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.environment.set(\"access_token\", jsonData.accessToken);",
+									"pm.environment.set(\"refresh_token\", jsonData.refreshToken);",
+									"pm.environment.set(\"user_id\", jsonData.user.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@juki.com\",\n    \"password\": \"Admin123!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login (User)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.environment.set(\"access_token\", jsonData.accessToken);",
+									"pm.environment.set(\"refresh_token\", jsonData.refreshToken);",
+									"pm.environment.set(\"user_id\", jsonData.user.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"user@juki.com\",\n    \"password\": \"User123!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register (New User)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"newuser@juki.com\",\n    \"password\": \"User123!\",\n    \"fullName\": \"New Juki User\",\n    \"nim\": \"NEW001\",\n    \"phone\": \"08999999999\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{refresh_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/refresh",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"refresh"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change Password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"oldPassword\": \"User123!\",\n    \"newPassword\": \"UserNew123!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/change-password",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"change-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/logout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"logout"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Public / Common",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Settings (Public)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/settings",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"settings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Available Trainings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/trainings",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trainings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Training by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/trainings/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trainings",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "TRAINING_ID_HERE"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "Profile",
+					"item": [
+						{
+							"name": "Get Me (Profile)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/profiles/me",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"profiles",
+										"me"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Me (Profile)",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"fullName\": \"Updated Name\",\n    \"phone\": \"08888888888\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/profiles/me",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"profiles",
+										"me"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Training Flow",
+					"item": [
+						{
+							"name": "Upload Payment Proof",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "file",
+											"type": "file",
+											"src": []
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/payments/upload",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"payments",
+										"upload"
+									]
+								},
+								"description": "Requires status: PAYMENT_REQUIRED or PAYMENT_WAITING"
+							},
+							"response": []
+						},
+										{
+											"name": "My Training Details",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{base_url}}/trainings/my-training",
+													"host": [
+														"{{base_url}}"
+													],
+													"path": [
+														"trainings",
+														"my-training"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Select Training",							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/trainings/:id/select",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"trainings",
+										":id",
+										"select"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "TRAINING_ID_HERE"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Confirm Administrative Data",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/administrative/confirm",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"administrative",
+										"confirm"
+									]
+								},
+								"description": "Requires status: ADMINISTRATIVE_REQUIRED"
+							},
+							"response": []
+						},
+														{
+															"name": "Confirm OJS Submission",
+															"request": {
+																"method": "POST",
+																"header": [],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n    \"articleTitle\": \"Analisis Pengaruh Jurnal Terhadap Mahasiswa\"\n}",
+																	"options": {
+																		"raw": {
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{base_url}}/articles/confirm-submission",
+																	"host": [
+																		"{{base_url}}"
+																	],
+																	"path": [
+																		"articles",
+																		"confirm-submission"
+																	]
+																},
+																"description": "Use this when you have finished submitting your article on the external OJS website."
+															},
+															"response": []
+														},										{
+											"name": "Confirm Revision (External)",
+											"request": {
+												"method": "POST",
+												"header": [],
+												"url": {
+													"raw": "{{base_url}}/articles/confirm-revision",
+													"host": [
+														"{{base_url}}"
+													],
+													"path": [
+														"articles",
+														"confirm-revision"
+													]
+												},
+												"description": "Use this when you have finished revising your article on the external website."
+											},
+											"response": []
+										},
+										{
+											"name": "Download LOA",							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/articles/loa",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"articles",
+										"loa"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+						{
+							"name": "Documents",
+							"item": [
+								{
+									"name": "My Attachments (List All)",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/attachments/me",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"attachments",
+												"me"
+											]
+										}
+									},
+									"response": []
+								},
+												{
+													"name": "Download Attachment",
+													"request": {
+														"method": "GET",
+														"header": [],
+														"url": {
+															"raw": "{{base_url}}/attachments/:id/download",
+															"host": [
+																"{{base_url}}"
+															],
+															"path": [
+																"attachments",
+																":id",
+																"download"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "ATTACHMENT_ID_HERE"
+																}
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "Preview Attachment",
+													"request": {
+														"method": "GET",
+														"header": [],
+														"url": {
+															"raw": "{{base_url}}/attachments/:id/preview",
+															"host": [
+																"{{base_url}}"
+															],
+															"path": [
+																"attachments",
+																":id",
+																"preview"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "ATTACHMENT_ID_HERE"
+																}
+															]
+														}
+													},
+													"response": []
+												}
+											]
+										},						{
+							"name": "Feedback",					"item": [
+						{
+							"name": "Create Feedback",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"message\": \"Aplikasi sangat membantu, terima kasih!\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/feedbacks",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"feedbacks"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "My Feedbacks",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/feedbacks/me",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"feedbacks",
+										"me"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "My Audit Logs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/audit-logs/me",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"audit-logs",
+								"me"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Admin / Super Admin",
+			"item": [
+				{
+					"name": "User Management",
+					"item": [
+						{
+							"name": "List Users",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/users?page=1&limit=10",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"users"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get User Stats",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/users/stats",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"users",
+										"stats"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get User by ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/users/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"users",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "{{user_id}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update User",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"role\": \"USER\",\n    \"status\": \"ACTIVE\",\n    \"fullName\": \"Nama Baru Peserta\",\n    \"phone\": \"08123456789\",\n    \"nim\": \"12345678\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/users/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"users",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "{{user_id}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete User",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/users/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"users",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "{{user_id}}"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Flow Management",
+					"item": [
+						{
+							"name": "Verify Payment",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"verified\": true,\n    \"notes\": \"Pembayaran valid\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/admin/payments/:userId/verify",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"admin",
+										"payments",
+										":userId",
+										"verify"
+									],
+									"variable": [
+										{
+											"key": "userId",
+											"value": "{{user_id}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Complete Administrative",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/admin/administrative/:userId/complete",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"admin",
+										"administrative",
+										":userId",
+										"complete"
+									],
+									"variable": [
+										{
+											"key": "userId",
+											"value": "{{user_id}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create OJS Account",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"username\": \"juki_user\",\n    \"password\": \"Juki123!\",\n    \"journalCode\": \"JUKI-01\",\n    \"journalLink\": \"https://jurnal.example.com\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/admin/administrative/:userId/ojs",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"admin",
+										"administrative",
+										":userId",
+										"ojs"
+									],
+									"variable": [
+										{
+											"key": "userId",
+											"value": "{{user_id}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Verify Article",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"comment\": \"Artikel sesuai format.\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/admin/articles/:userId/verify",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"admin",
+										"articles",
+										":userId",
+										"verify"
+									],
+									"variable": [
+										{
+											"key": "userId",
+											"value": "{{user_id}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Reject Article",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"comment\": \"Mohon perbaiki format abstrak.\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/admin/articles/:userId/reject",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"admin",
+										"articles",
+										":userId",
+										"reject"
+									],
+									"variable": [
+										{
+											"key": "userId",
+											"value": "{{user_id}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Accept Review",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"comment\": \"Artikel diterima tanpa revisi.\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/admin/review-loa/:userId/review/accept",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"admin",
+										"review-loa",
+										":userId",
+										"review",
+										"accept"
+									],
+									"variable": [
+										{
+											"key": "userId",
+											"value": "{{user_id}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Request Revision",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"comment\": \"Mohon revisi daftar pustaka.\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/admin/review-loa/:userId/review/revision",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"admin",
+										"review-loa",
+										":userId",
+										"review",
+										"revision"
+									],
+									"variable": [
+										{
+											"key": "userId",
+											"value": "{{user_id}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Upload LOA",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "file",
+											"type": "file",
+											"src": []
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/admin/review-loa/:userId/loa/upload",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"admin",
+										"review-loa",
+										":userId",
+										"loa",
+										"upload"
+									],
+									"variable": [
+										{
+											"key": "userId",
+											"value": "{{user_id}}"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+								{
+									"name": "Document Management",
+									"item": [
+														{
+															"name": "Download Any Attachment (Admin)",
+															"request": {
+																"method": "GET",
+																"header": [],
+																"url": {
+																	"raw": "{{base_url}}/attachments/admin/:id/download",
+																	"host": [
+																		"{{base_url}}"
+																	],
+																	"path": [
+																		"attachments",
+																		"admin",
+																		":id",
+																		"download"
+																	],
+																	"variable": [
+																		{
+																			"key": "id",
+																			"value": "ATTACHMENT_ID_HERE"
+																		}
+																	]
+																}
+															},
+															"response": []
+														},
+														{
+															"name": "Preview Any Attachment (Admin)",
+															"request": {
+																"method": "GET",
+																"header": [],
+																"url": {
+																	"raw": "{{base_url}}/attachments/admin/:id/preview",
+																	"host": [
+																		"{{base_url}}"
+																	],
+																	"path": [
+																		"attachments",
+																		"admin",
+																		":id",
+																		"preview"
+																	],
+																	"variable": [
+																		{
+																			"key": "id",
+																			"value": "ATTACHMENT_ID_HERE"
+																		}
+																	]
+																}
+															},
+															"response": []
+														}
+													]
+												},								{
+									"name": "Training Management",
+									"item": [
+										{
+											"name": "List Trainings (Admin)",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{base_url}}/admin/trainings?page=1&limit=10",
+													"host": [
+														"{{base_url}}"
+													],
+													"path": [
+														"admin",
+														"trainings"
+													],
+													"query": [
+														{
+															"key": "page",
+															"value": "1"
+														},
+														{
+															"key": "limit",
+															"value": "10"
+														}
+													]
+												}
+											},
+											"response": []
+										},
+														{
+															"name": "Record Attendance",
+															"request": {
+																"method": "POST",
+																"header": [],
+																												"body": {
+																													"mode": "raw",
+																													"raw": "{\n    \"trainingId\": \"UUID-JADWAL-PELATIHAN\",\n    \"userId\": \"UUID-USER-PESERTA\",\n    \"status\": \"PRESENT\"\n}",
+																													"options": {
+																														"raw": {
+																															"language": "json"
+																														}
+																													}
+																												},																"url": {
+																	"raw": "{{base_url}}/admin/trainings/attendance",
+																	"host": [
+																		"{{base_url}}"
+																	],
+																	"path": [
+																		"admin",
+																		"trainings",
+																		"attendance"
+																	]
+																}
+															},
+															"response": []
+														},
+														{
+															"name": "Create Training",											"request": {
+												"method": "POST",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n    \"batch\": \"BATCH-TEST-001\",\n    \"title\": \"Pelatihan Jurnal Batch Test\",\n    \"startAt\": \"2026-02-01T09:00:00Z\",\n    \"endAt\": \"2026-02-01T12:00:00Z\",\n    \"location\": \"Zoom Meeting\",\n    \"journalCode\": \"JUKI-VOL4\",\n    \"mentorName\": \"Dr. Tester\",\n    \"quota\": 50\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{base_url}}/admin/trainings",
+													"host": [
+														"{{base_url}}"
+													],
+													"path": [
+														"admin",
+														"trainings"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Get Training Detail",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{base_url}}/admin/trainings/:id",
+													"host": [
+														"{{base_url}}"
+													],
+													"path": [
+														"admin",
+														"trainings",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id",
+															"value": "TRAINING_ID_HERE"
+														}
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Update Training",
+											"request": {
+												"method": "PATCH",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n    \"title\": \"Pelatihan Jurnal Batch Test (Updated)\",\n    \"quota\": 100\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{base_url}}/admin/trainings/:id",
+													"host": [
+														"{{base_url}}"
+													],
+													"path": [
+														"admin",
+														"trainings",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id",
+															"value": "TRAINING_ID_HERE"
+														}
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Delete Training",
+											"request": {
+												"method": "DELETE",
+												"header": [],
+												"url": {
+													"raw": "{{base_url}}/admin/trainings/:id",
+													"host": [
+														"{{base_url}}"
+													],
+													"path": [
+														"admin",
+														"trainings",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id",
+															"value": "TRAINING_ID_HERE"
+														}
+													]
+												}
+											},
+											"response": []
+										}
+									]
+								},
+								{
+									"name": "Feedback Management",					"item": [
+						{
+							"name": "List All Feedbacks",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/feedbacks?page=1&limit=10",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"feedbacks"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Settings & Audit",
+					"item": [
+						{
+							"name": "Update Settings",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"settings\": [\n        {\n            \"key\": \"payment_amount\",\n            \"value\": \"200000\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/settings",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"settings"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List Audit Logs",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/audit-logs?page=1&limit=20",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"audit-logs"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "20"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		}
+	]
 }

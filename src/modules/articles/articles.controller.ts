@@ -1,4 +1,4 @@
-import { Post, Get, UseGuards, UseInterceptors, UploadedFile, Req, Controller, BadRequestException, StreamableFile, Res, NotFoundException } from '@nestjs/common';
+import { Post, Get, UseGuards, UseInterceptors, UploadedFile, Req, Controller, BadRequestException, StreamableFile, Res, NotFoundException, Body } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -18,57 +18,20 @@ import { createReadStream } from 'fs';
 export class ArticlesController {
   constructor(private readonly articlesService: ArticlesService) {}
 
-  @Post('upload')
+  @Post('confirm-submission')
   @FlowStatus(TRAINING_STATUS.ARTICLE_WAITING)
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: (_req, _file, cb) => {
-          const uploadPath = path.join(process.cwd(), 'uploads', 'articles');
-          if (!fs.existsSync(uploadPath)) {
-            fs.mkdirSync(uploadPath, { recursive: true });
-          }
-          cb(null, uploadPath);
-        },
-        filename: (_req, file, cb) => {
-          const sanitized = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-          const uniqueName = `${crypto.randomUUID()}-${sanitized}`;
-          cb(null, uniqueName);
-        },
-      }),
-      limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB
-      },
-      fileFilter: (_req, file, cb) => {
-        const allowedMimes = [
-          'application/pdf',
-          'application/msword',
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        ];
-        const allowedExts = ['.pdf', '.doc', '.docx'];
-        const ext = path.extname(file.originalname).toLowerCase();
-
-        if (!allowedMimes.includes(file.mimetype) || !allowedExts.includes(ext)) {
-          return cb(new BadRequestException('Only document files (pdf, doc, docx) are allowed'), false);
-        }
-        cb(null, true);
-      },
-    }),
-  )
-  async uploadArticle(
-    @UploadedFile() file: Express.Multer.File,
-    @Req() req: any,
-  ) {
-    if (!file) {
-      throw new BadRequestException('File is required');
+  async confirmSubmission(@Req() req: any, @Body('articleTitle') articleTitle: string) {
+    if (!articleTitle) {
+      throw new BadRequestException('Article title is required');
     }
-    const request = req as Request & { user: JwtUser };
-    const userId = request.user.id;
+    const userId = req.user.id;
+    return this.articlesService.confirmSubmission(userId, articleTitle);
+  }
 
-    return this.articlesService.uploadArticle({
-      userId,
-      file,
-    });
+  @Post('confirm-revision')
+  async confirmRevision(@Req() req: any) {
+    const userId = req.user.id;
+    return this.articlesService.confirmRevision(userId);
   }
 
   @Get('loa')
