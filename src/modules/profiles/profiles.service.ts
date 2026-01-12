@@ -13,6 +13,7 @@ export class ProfilesService {
       include: {
         user: {
           select: {
+            email: true,
             trainingFlow: {
               include: {
                 ojsAccount: true,

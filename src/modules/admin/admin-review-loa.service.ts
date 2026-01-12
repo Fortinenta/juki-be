@@ -3,6 +3,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { TrainingFlowService } from '../training-flow/training-flow.service';
 import { TRAINING_STATUS } from '../../common/constants/training-status.constants';
 import { AttachmentType } from '@prisma/client';
+import { unlink } from 'fs/promises';
+import { existsSync } from 'fs';
 
 @Injectable()
 export class AdminReviewLoaService {
@@ -98,6 +100,29 @@ export class AdminReviewLoaService {
       
       const attachmentPath = normalizePath(file.path);
       console.log(`[AdminReviewLoa] Saving ${isReupload ? 'NEW ' : ''}attachment to DB: ${attachmentPath}`);
+
+      // Delete existing LOA records and physical files for this user
+      const existingLoas = await this.prisma.attachment.findMany({
+        where: { userId, type: AttachmentType.LOA },
+      });
+
+      for (const loa of existingLoas) {
+        try {
+          if (existsSync(loa.filePath)) {
+            await unlink(loa.filePath);
+            console.log(`[AdminReviewLoa] Deleted old LOA file: ${loa.filePath}`);
+          }
+        } catch (err) {
+          console.warn(`[AdminReviewLoa] Failed to delete old file at ${loa.filePath}:`, err.message);
+        }
+      }
+
+      if (existingLoas.length > 0) {
+        await this.prisma.attachment.deleteMany({
+          where: { userId, type: AttachmentType.LOA },
+        });
+        console.log(`[AdminReviewLoa] Removed ${existingLoas.length} old LOA record(s) from DB`);
+      }
 
       await this.prisma.attachment.create({
         data: {

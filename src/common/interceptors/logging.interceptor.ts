@@ -1,4 +1,11 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+  Logger,
+  StreamableFile,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Request } from 'express';
@@ -15,9 +22,26 @@ export class LoggingInterceptor implements NestInterceptor {
     return next.handle().pipe(
       tap((data) => {
         const responseTime = Date.now() - now;
-        this.logger.log(
-          `[${method}] ${url} - ${responseTime}ms - Response: ${JSON.stringify(data)}`,
-        );
+        let logData = '';
+
+        if (data instanceof StreamableFile) {
+          logData = '[StreamableFile]';
+        } else if (data === null || data === undefined) {
+          logData = String(data);
+        } else {
+          try {
+            logData = JSON.stringify(data);
+          } catch (e) {
+            logData = '[Unserializable Data]';
+          }
+        }
+
+        // Limit log size to avoid memory issues and log clutter
+        if (logData.length > 1000) {
+          logData = logData.substring(0, 1000) + '... (truncated)';
+        }
+
+        this.logger.log(`[${method}] ${url} - ${responseTime}ms - Response: ${logData}`);
       }),
     );
   }

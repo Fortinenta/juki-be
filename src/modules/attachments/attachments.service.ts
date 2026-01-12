@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Attachment } from '@prisma/client';
+import { Attachment, AttachmentType } from '@prisma/client';
+import { extname } from 'path';
 
 @Injectable()
 export class AttachmentsService {
@@ -16,40 +17,71 @@ export class AttachmentsService {
   async findOneForDownload(id: string, userId: string) {
     const attachment = await this.prisma.attachment.findUnique({
       where: { id },
+      include: {
+        user: {
+          include: {
+            profile: true,
+          },
+        },
+      },
     });
 
     if (!attachment) {
       throw new NotFoundException('Attachment not found');
     }
 
-    // Security check: ensure user owns the attachment (or admin, but for this endpoint we assume user context)
-    // If you want admins to download user files, we might need a separate endpoint or pass roles here.
+    // Security check: ensure user owns the attachment
     if (attachment.userId !== userId) {
-        // Optional: Check if role is admin logic here if reusing service
-        throw new ForbiddenException('You do not have permission to access this file');
+      throw new ForbiddenException('You do not have permission to access this file');
+    }
+
+    let filename = attachment.originalName || `file-${attachment.id}`;
+
+    // Custom wording for LOA: LOA_NIM_Nama
+    if (attachment.type === AttachmentType.LOA && attachment.user?.profile) {
+      const extension = extname(attachment.filePath) || '.pdf';
+      const nim = attachment.user.profile.nim || 'NO_NIM';
+      const safeName = attachment.user.profile.fullName.replace(/\s+/g, '_');
+      filename = `LOA_${nim}_${safeName}${extension}`;
     }
 
     return {
-        path: attachment.filePath,
-        filename: attachment.originalName || `file-${attachment.id}`,
-        mimeType: attachment.mimeType
+      path: attachment.filePath,
+      filename,
+      mimeType: attachment.mimeType,
     };
   }
-  
-  // Method khusus untuk admin download file user
+
   async findOneForAdminDownload(id: string) {
-      const attachment = await this.prisma.attachment.findUnique({
-        where: { id },
-      });
-  
-      if (!attachment) {
-        throw new NotFoundException('Attachment not found');
-      }
-  
-      return {
-          path: attachment.filePath,
-          filename: attachment.originalName || `file-${attachment.id}`,
-          mimeType: attachment.mimeType
-      };
+    const attachment = await this.prisma.attachment.findUnique({
+      where: { id },
+      include: {
+        user: {
+          include: {
+            profile: true,
+          },
+        },
+      },
+    });
+
+    if (!attachment) {
+      throw new NotFoundException('Attachment not found');
     }
+
+    let filename = attachment.originalName || `file-${attachment.id}`;
+
+    // Custom wording for LOA: LOA_NIM_Nama
+    if (attachment.type === AttachmentType.LOA && attachment.user?.profile) {
+      const extension = extname(attachment.filePath) || '.pdf';
+      const nim = attachment.user.profile.nim || 'NO_NIM';
+      const safeName = attachment.user.profile.fullName.replace(/\s+/g, '_');
+      filename = `LOA_${nim}_${safeName}${extension}`;
+    }
+
+    return {
+      path: attachment.filePath,
+      filename,
+      mimeType: attachment.mimeType,
+    };
+  }
 }
