@@ -6,6 +6,17 @@ import { TRAINING_STATUS } from '../../common/constants/training-status.constant
 export class AdministrativeService {
   constructor(private readonly trainingFlowService: TrainingFlowService) {}
 
+  async startAdministrative(userId: string) {
+    await this.trainingFlowService.transitionStatus({
+      userId,
+      nextStatus: TRAINING_STATUS.ADMINISTRATIVE_REQUIRED,
+      actorId: userId,
+      metadata: { action: 'START_ADMINISTRATIVE_STAGE' },
+    });
+
+    return { message: 'Started administrative stage. Please fill the form.' };
+  }
+
   async confirmAdministrative(userId: string) {
     await this.trainingFlowService.transitionStatus({
       userId,

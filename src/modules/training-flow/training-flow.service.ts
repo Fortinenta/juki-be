@@ -53,41 +53,60 @@ export class TrainingFlowService {
     metadata?: Record<string, any>;
   }) {
     const { userId, nextStatus, actorId, metadata } = params;
+    console.log(`[Flow] Transitioning user ${userId} to ${nextStatus} by actor ${actorId}`);
 
-    return this.prisma.$transaction(async (tx) => {
-      const flow = await tx.userTrainingFlow.findUnique({
-        where: { userId },
-      });
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        console.log('[Flow] Finding user flow...');
+        const flow = await tx.userTrainingFlow.findUnique({
+          where: { userId },
+        });
 
-      if (!flow) {
-        throw new BadRequestException('Training flow not found');
-      }
+        if (!flow) {
+          console.error('[Flow] Flow not found for user:', userId);
+          throw new BadRequestException('Training flow not found');
+        }
+        console.log(`[Flow] Current status: ${flow.statusCode}`);
 
-      if (flow.isLocked) {
-        throw new ForbiddenException('Training flow is locked');
-      }
+        if (flow.isLocked) {
+          throw new ForbiddenException('Training flow is locked');
+        }
 
-      this.validateTransition(flow.statusCode, nextStatus);
+        console.log('[Flow] Validating transition...');
+        this.validateTransition(flow.statusCode, nextStatus);
 
-      const updated = await tx.userTrainingFlow.update({
-        where: { userId },
-        data: { statusCode: nextStatus },
-      });
+        console.log('[Flow] Updating status...');
+        const updated = await tx.userTrainingFlow.update({
+          where: { userId },
+          data: { statusCode: nextStatus },
+        });
 
-      await tx.auditLog.create({
-        data: {
-          userId: actorId,
-          action: AuditAction.UPDATE_PROFILE,
-          metadata: {
-            from: flow.statusCode,
-            to: nextStatus,
-            ...metadata,
+        console.log('[Flow] Creating audit log...');
+        // Pastikan enum valid
+        console.log('AuditAction:', AuditAction.UPDATE_PROFILE); 
+        
+        await tx.auditLog.create({
+          data: {
+            userId: actorId,
+            action: AuditAction.UPDATE_PROFILE,
+            metadata: {
+              from: flow.statusCode,
+              to: nextStatus,
+              ...metadata,
+            },
           },
-        },
+        });
+        
+        console.log('[Flow] Transaction complete.');
+        return updated;
       });
-
-      return updated;
-    });
+    } catch (error) {
+      console.error('[Flow] Transaction failed:', error);
+      if (error.code === 'P2003') {
+        throw new BadRequestException('Invalid Actor ID (Admin not found in DB). Please re-login.');
+      }
+      throw error;
+    }
   }
 
   async lockFlow(userId: string, reason: string) {

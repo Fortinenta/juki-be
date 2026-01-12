@@ -11,6 +11,12 @@ import { TRAINING_STATUS } from '../../common/constants/training-status.constant
 export class AdministrativeController {
   constructor(private readonly service: AdministrativeService) {}
 
+  @Post('start')
+  @FlowStatus(TRAINING_STATUS.PAYMENT_VERIFIED)
+  async startAdministrative(@Req() req: any) {
+    return this.service.startAdministrative(req.user.id);
+  }
+
   @Post('confirm')
   @FlowStatus(TRAINING_STATUS.ADMINISTRATIVE_REQUIRED)
   async confirmAdministrative(@Req() req: any) {

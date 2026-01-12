@@ -112,7 +112,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"user@juki.com\",\n    \"password\": \"User123!\"\n}",
+							"raw": "{\n    \"email\": \"user_payment_required_1@example.com\",\n    \"password\": \"password123\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -154,79 +154,6 @@
 							"path": [
 								"auth",
 								"register"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Refresh Token",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{refresh_token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/auth/refresh",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"refresh"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Change Password",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"oldPassword\": \"User123!\",\n    \"newPassword\": \"UserNew123!\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/change-password",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"change-password"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Logout",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/auth/logout",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"logout"
 							]
 						}
 					},
@@ -287,30 +214,6 @@
 						}
 					},
 					"response": []
-				},
-				{
-					"name": "Get Training by ID",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/trainings/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"trainings",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "TRAINING_ID_HERE"
-								}
-							]
-						}
-					},
-					"response": []
 				}
 			]
 		},
@@ -325,33 +228,6 @@
 							"request": {
 								"method": "GET",
 								"header": [],
-								"url": {
-									"raw": "{{base_url}}/profiles/me",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"profiles",
-										"me"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Update Me (Profile)",
-							"request": {
-								"method": "PUT",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"fullName\": \"Updated Name\",\n    \"phone\": \"08888888888\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
 								"url": {
 									"raw": "{{base_url}}/profiles/me",
 									"host": [
@@ -394,50 +270,26 @@
 										"payments",
 										"upload"
 									]
-								},
-								"description": "Requires status: PAYMENT_REQUIRED or PAYMENT_WAITING"
+								}
 							},
 							"response": []
 						},
-										{
-											"name": "My Training Details",
-											"request": {
-												"method": "GET",
-												"header": [],
-												"url": {
-													"raw": "{{base_url}}/trainings/my-training",
-													"host": [
-														"{{base_url}}"
-													],
-													"path": [
-														"trainings",
-														"my-training"
-													]
-												}
-											},
-											"response": []
-										},
-										{
-											"name": "Select Training",							"request": {
+						{
+							"name": "Start Administrative Stage",
+							"request": {
 								"method": "POST",
 								"header": [],
 								"url": {
-									"raw": "{{base_url}}/trainings/:id/select",
+									"raw": "{{base_url}}/administrative/start",
 									"host": [
 										"{{base_url}}"
 									],
 									"path": [
-										"trainings",
-										":id",
-										"select"
-									],
-									"variable": [
-										{
-											"key": "id",
-											"value": "TRAINING_ID_HERE"
-										}
+										"administrative",
+										"start"
 									]
-								}
+								},
+								"description": "Transition from PAYMENT_VERIFIED to ADMINISTRATIVE_REQUIRED"
 							},
 							"response": []
 						},
@@ -456,212 +308,37 @@
 										"confirm"
 									]
 								},
-								"description": "Requires status: ADMINISTRATIVE_REQUIRED"
+								"description": "Requires status: ADMINISTRATIVE_REQUIRED. Transitions to WAITING_ADMINISTRATIVE."
 							},
 							"response": []
 						},
-														{
-															"name": "Confirm OJS Submission",
-															"request": {
-																"method": "POST",
-																"header": [],
-																"body": {
-																	"mode": "raw",
-																	"raw": "{\n    \"articleTitle\": \"Analisis Pengaruh Jurnal Terhadap Mahasiswa\"\n}",
-																	"options": {
-																		"raw": {
-																			"language": "json"
-																		}
-																	}
-																},
-																"url": {
-																	"raw": "{{base_url}}/articles/confirm-submission",
-																	"host": [
-																		"{{base_url}}"
-																	],
-																	"path": [
-																		"articles",
-																		"confirm-submission"
-																	]
-																},
-																"description": "Use this when you have finished submitting your article on the external OJS website."
-															},
-															"response": []
-														},										{
-											"name": "Confirm Revision (External)",
-											"request": {
-												"method": "POST",
-												"header": [],
-												"url": {
-													"raw": "{{base_url}}/articles/confirm-revision",
-													"host": [
-														"{{base_url}}"
-													],
-													"path": [
-														"articles",
-														"confirm-revision"
-													]
-												},
-												"description": "Use this when you have finished revising your article on the external website."
-											},
-											"response": []
-										},
-										{
-											"name": "Download LOA",							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/articles/loa",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"articles",
-										"loa"
-									]
-								}
-							},
-							"response": []
-						}
-					]
-				},
 						{
-							"name": "Documents",
-							"item": [
-								{
-									"name": "My Attachments (List All)",
-									"request": {
-										"method": "GET",
-										"header": [],
-										"url": {
-											"raw": "{{base_url}}/attachments/me",
-											"host": [
-												"{{base_url}}"
-											],
-											"path": [
-												"attachments",
-												"me"
-											]
-										}
-									},
-									"response": []
-								},
-												{
-													"name": "Download Attachment",
-													"request": {
-														"method": "GET",
-														"header": [],
-														"url": {
-															"raw": "{{base_url}}/attachments/:id/download",
-															"host": [
-																"{{base_url}}"
-															],
-															"path": [
-																"attachments",
-																":id",
-																"download"
-															],
-															"variable": [
-																{
-																	"key": "id",
-																	"value": "ATTACHMENT_ID_HERE"
-																}
-															]
-														}
-													},
-													"response": []
-												},
-												{
-													"name": "Preview Attachment",
-													"request": {
-														"method": "GET",
-														"header": [],
-														"url": {
-															"raw": "{{base_url}}/attachments/:id/preview",
-															"host": [
-																"{{base_url}}"
-															],
-															"path": [
-																"attachments",
-																":id",
-																"preview"
-															],
-															"variable": [
-																{
-																	"key": "id",
-																	"value": "ATTACHMENT_ID_HERE"
-																}
-															]
-														}
-													},
-													"response": []
-												}
-											]
-										},						{
-							"name": "Feedback",					"item": [
-						{
-							"name": "Create Feedback",
+							"name": "Select Training",
 							"request": {
 								"method": "POST",
 								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"message\": \"Aplikasi sangat membantu, terima kasih!\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
+								"url": {
+									"raw": "{{base_url}}/trainings/:id/join",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"trainings",
+										":id",
+										"join"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "TRAINING_ID_HERE"
 										}
-									}
+									]
 								},
-								"url": {
-									"raw": "{{base_url}}/feedbacks",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"feedbacks"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "My Feedbacks",
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/feedbacks/me",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"feedbacks",
-										"me"
-									]
-								}
+								"description": "Requires status: ARTICLE_VERIFIED"
 							},
 							"response": []
 						}
 					]
-				},
-				{
-					"name": "My Audit Logs",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/audit-logs/me",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"audit-logs",
-								"me"
-							]
-						}
-					},
-					"response": []
 				}
 			]
 		},
@@ -669,35 +346,8 @@
 			"name": "Admin / Super Admin",
 			"item": [
 				{
-					"name": "User Management",
+					"name": "Dashboard & Users",
 					"item": [
-						{
-							"name": "List Users",
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/users?page=1&limit=10",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"users"
-									],
-									"query": [
-										{
-											"key": "page",
-											"value": "1"
-										},
-										{
-											"key": "limit",
-											"value": "10"
-										}
-									]
-								}
-							},
-							"response": []
-						},
 						{
 							"name": "Get User Stats",
 							"request": {
@@ -717,99 +367,42 @@
 							"response": []
 						},
 						{
-							"name": "Get User by ID",
+							"name": "List Users (Verification Needed)",
 							"request": {
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{base_url}}/users/:id",
+									"raw": "{{base_url}}/users?status=PAYMENT_WAITING",
 									"host": [
 										"{{base_url}}"
 									],
 									"path": [
-										"users",
-										":id"
+										"users"
 									],
-									"variable": [
+									"query": [
 										{
-											"key": "id",
-											"value": "{{user_id}}"
+											"key": "status",
+											"value": "PAYMENT_WAITING"
 										}
 									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Update User",
-							"request": {
-								"method": "PATCH",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"role\": \"USER\",\n    \"status\": \"ACTIVE\",\n    \"fullName\": \"Nama Baru Peserta\",\n    \"phone\": \"08123456789\",\n    \"nim\": \"12345678\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
 								},
-								"url": {
-									"raw": "{{base_url}}/users/:id",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"users",
-										":id"
-									],
-									"variable": [
-										{
-											"key": "id",
-											"value": "{{user_id}}"
-										}
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Delete User",
-							"request": {
-								"method": "DELETE",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/users/:id",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"users",
-										":id"
-									],
-									"variable": [
-										{
-											"key": "id",
-											"value": "{{user_id}}"
-										}
-									]
-								}
+								"description": "Use status=PAYMENT_WAITING or status=WAITING_ADMINISTRATIVE"
 							},
 							"response": []
 						}
 					]
 				},
 				{
-					"name": "Flow Management",
+					"name": "Verification Actions",
 					"item": [
 						{
-							"name": "Verify Payment",
+							"name": "Verify Payment (ACCEPT)",
 							"request": {
 								"method": "POST",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"verified\": true,\n    \"notes\": \"Pembayaran valid\"\n}",
+									"raw": "{\n    \"action\": \"ACCEPT\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -838,20 +431,29 @@
 							"response": []
 						},
 						{
-							"name": "Complete Administrative",
+							"name": "Verify Payment (REJECT)",
 							"request": {
 								"method": "POST",
 								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"action\": \"REJECT\",\n    \"reason\": \"Bukti transfer tidak jelas.\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
 								"url": {
-									"raw": "{{base_url}}/admin/administrative/:userId/complete",
+									"raw": "{{base_url}}/admin/payments/:userId/verify",
 									"host": [
 										"{{base_url}}"
 									],
 									"path": [
 										"admin",
-										"administrative",
+										"payments",
 										":userId",
-										"complete"
+										"verify"
 									],
 									"variable": [
 										{
@@ -864,7 +466,7 @@
 							"response": []
 						},
 						{
-							"name": "Create OJS Account",
+							"name": "Assign OJS Account",
 							"request": {
 								"method": "POST",
 								"header": [],
@@ -894,18 +496,19 @@
 											"value": "{{user_id}}"
 										}
 									]
-								}
+								},
+								"description": "Requires status: WAITING_ADMINISTRATIVE. Transitions user to ARTICLE_WAITING."
 							},
 							"response": []
 						},
 						{
-							"name": "Verify Article",
+							"name": "Record Attendance (PRESENT)",
 							"request": {
 								"method": "POST",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"comment\": \"Artikel sesuai format.\"\n}",
+									"raw": "{\n    \"trainingId\": \"UUID-JADWAL-PELATIHAN\",\n    \"userId\": \"UUID-USER-PESERTA\",\n    \"status\": \"PRESENT\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -913,422 +516,14 @@
 									}
 								},
 								"url": {
-									"raw": "{{base_url}}/admin/articles/:userId/verify",
+									"raw": "{{base_url}}/admin/trainings/attendance",
 									"host": [
 										"{{base_url}}"
 									],
 									"path": [
 										"admin",
-										"articles",
-										":userId",
-										"verify"
-									],
-									"variable": [
-										{
-											"key": "userId",
-											"value": "{{user_id}}"
-										}
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Reject Article",
-							"request": {
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"comment\": \"Mohon perbaiki format abstrak.\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{base_url}}/admin/articles/:userId/reject",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"admin",
-										"articles",
-										":userId",
-										"reject"
-									],
-									"variable": [
-										{
-											"key": "userId",
-											"value": "{{user_id}}"
-										}
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Accept Review",
-							"request": {
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"comment\": \"Artikel diterima tanpa revisi.\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{base_url}}/admin/review-loa/:userId/review/accept",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"admin",
-										"review-loa",
-										":userId",
-										"review",
-										"accept"
-									],
-									"variable": [
-										{
-											"key": "userId",
-											"value": "{{user_id}}"
-										}
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Request Revision",
-							"request": {
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"comment\": \"Mohon revisi daftar pustaka.\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{base_url}}/admin/review-loa/:userId/review/revision",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"admin",
-										"review-loa",
-										":userId",
-										"review",
-										"revision"
-									],
-									"variable": [
-										{
-											"key": "userId",
-											"value": "{{user_id}}"
-										}
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Upload LOA",
-							"request": {
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "formdata",
-									"formdata": [
-										{
-											"key": "file",
-											"type": "file",
-											"src": []
-										}
-									]
-								},
-								"url": {
-									"raw": "{{base_url}}/admin/review-loa/:userId/loa/upload",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"admin",
-										"review-loa",
-										":userId",
-										"loa",
-										"upload"
-									],
-									"variable": [
-										{
-											"key": "userId",
-											"value": "{{user_id}}"
-										}
-									]
-								}
-							},
-							"response": []
-						}
-					]
-				},
-								{
-									"name": "Document Management",
-									"item": [
-														{
-															"name": "Download Any Attachment (Admin)",
-															"request": {
-																"method": "GET",
-																"header": [],
-																"url": {
-																	"raw": "{{base_url}}/attachments/admin/:id/download",
-																	"host": [
-																		"{{base_url}}"
-																	],
-																	"path": [
-																		"attachments",
-																		"admin",
-																		":id",
-																		"download"
-																	],
-																	"variable": [
-																		{
-																			"key": "id",
-																			"value": "ATTACHMENT_ID_HERE"
-																		}
-																	]
-																}
-															},
-															"response": []
-														},
-														{
-															"name": "Preview Any Attachment (Admin)",
-															"request": {
-																"method": "GET",
-																"header": [],
-																"url": {
-																	"raw": "{{base_url}}/attachments/admin/:id/preview",
-																	"host": [
-																		"{{base_url}}"
-																	],
-																	"path": [
-																		"attachments",
-																		"admin",
-																		":id",
-																		"preview"
-																	],
-																	"variable": [
-																		{
-																			"key": "id",
-																			"value": "ATTACHMENT_ID_HERE"
-																		}
-																	]
-																}
-															},
-															"response": []
-														}
-													]
-												},								{
-									"name": "Training Management",
-									"item": [
-										{
-											"name": "List Trainings (Admin)",
-											"request": {
-												"method": "GET",
-												"header": [],
-												"url": {
-													"raw": "{{base_url}}/admin/trainings?page=1&limit=10",
-													"host": [
-														"{{base_url}}"
-													],
-													"path": [
-														"admin",
-														"trainings"
-													],
-													"query": [
-														{
-															"key": "page",
-															"value": "1"
-														},
-														{
-															"key": "limit",
-															"value": "10"
-														}
-													]
-												}
-											},
-											"response": []
-										},
-														{
-															"name": "Record Attendance",
-															"request": {
-																"method": "POST",
-																"header": [],
-																												"body": {
-																													"mode": "raw",
-																													"raw": "{\n    \"trainingId\": \"UUID-JADWAL-PELATIHAN\",\n    \"userId\": \"UUID-USER-PESERTA\",\n    \"status\": \"PRESENT\"\n}",
-																													"options": {
-																														"raw": {
-																															"language": "json"
-																														}
-																													}
-																												},																"url": {
-																	"raw": "{{base_url}}/admin/trainings/attendance",
-																	"host": [
-																		"{{base_url}}"
-																	],
-																	"path": [
-																		"admin",
-																		"trainings",
-																		"attendance"
-																	]
-																}
-															},
-															"response": []
-														},
-														{
-															"name": "Create Training",											"request": {
-												"method": "POST",
-												"header": [],
-												"body": {
-													"mode": "raw",
-													"raw": "{\n    \"batch\": \"BATCH-TEST-001\",\n    \"title\": \"Pelatihan Jurnal Batch Test\",\n    \"startAt\": \"2026-02-01T09:00:00Z\",\n    \"endAt\": \"2026-02-01T12:00:00Z\",\n    \"location\": \"Zoom Meeting\",\n    \"journalCode\": \"JUKI-VOL4\",\n    \"mentorName\": \"Dr. Tester\",\n    \"quota\": 50\n}",
-													"options": {
-														"raw": {
-															"language": "json"
-														}
-													}
-												},
-												"url": {
-													"raw": "{{base_url}}/admin/trainings",
-													"host": [
-														"{{base_url}}"
-													],
-													"path": [
-														"admin",
-														"trainings"
-													]
-												}
-											},
-											"response": []
-										},
-										{
-											"name": "Get Training Detail",
-											"request": {
-												"method": "GET",
-												"header": [],
-												"url": {
-													"raw": "{{base_url}}/admin/trainings/:id",
-													"host": [
-														"{{base_url}}"
-													],
-													"path": [
-														"admin",
-														"trainings",
-														":id"
-													],
-													"variable": [
-														{
-															"key": "id",
-															"value": "TRAINING_ID_HERE"
-														}
-													]
-												}
-											},
-											"response": []
-										},
-										{
-											"name": "Update Training",
-											"request": {
-												"method": "PATCH",
-												"header": [],
-												"body": {
-													"mode": "raw",
-													"raw": "{\n    \"title\": \"Pelatihan Jurnal Batch Test (Updated)\",\n    \"quota\": 100\n}",
-													"options": {
-														"raw": {
-															"language": "json"
-														}
-													}
-												},
-												"url": {
-													"raw": "{{base_url}}/admin/trainings/:id",
-													"host": [
-														"{{base_url}}"
-													],
-													"path": [
-														"admin",
-														"trainings",
-														":id"
-													],
-													"variable": [
-														{
-															"key": "id",
-															"value": "TRAINING_ID_HERE"
-														}
-													]
-												}
-											},
-											"response": []
-										},
-										{
-											"name": "Delete Training",
-											"request": {
-												"method": "DELETE",
-												"header": [],
-												"url": {
-													"raw": "{{base_url}}/admin/trainings/:id",
-													"host": [
-														"{{base_url}}"
-													],
-													"path": [
-														"admin",
-														"trainings",
-														":id"
-													],
-													"variable": [
-														{
-															"key": "id",
-															"value": "TRAINING_ID_HERE"
-														}
-													]
-												}
-											},
-											"response": []
-										}
-									]
-								},
-								{
-									"name": "Feedback Management",					"item": [
-						{
-							"name": "List All Feedbacks",
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/feedbacks?page=1&limit=10",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"feedbacks"
-									],
-									"query": [
-										{
-											"key": "page",
-											"value": "1"
-										},
-										{
-											"key": "limit",
-											"value": "10"
-										}
+										"trainings",
+										"attendance"
 									]
 								}
 							},
@@ -1337,16 +532,16 @@
 					]
 				},
 				{
-					"name": "Settings & Audit",
+					"name": "System Settings",
 					"item": [
 						{
-							"name": "Update Settings",
+							"name": "Update Payment & Form Info",
 							"request": {
 								"method": "PATCH",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"settings\": [\n        {\n            \"key\": \"payment_amount\",\n            \"value\": \"200000\"\n        }\n    ]\n}",
+									"raw": "{\n    \"payment_bank_name\": \"Bank Mandiri\",\n    \"payment_account_number\": \"900-00-1234567-8\",\n    \"payment_account_name\": \"Bendahara JUKI\",\n    \"payment_amount\": \"150000\",\n    \"admin_form_link\": \"https://forms.gle/sample\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1360,33 +555,6 @@
 									],
 									"path": [
 										"settings"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "List Audit Logs",
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/audit-logs?page=1&limit=20",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"audit-logs"
-									],
-									"query": [
-										{
-											"key": "page",
-											"value": "1"
-										},
-										{
-											"key": "limit",
-											"value": "20"
-										}
 									]
 								}
 							},
@@ -1407,26 +575,6 @@
 			}
 		]
 	},
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		}
-	],
 	"variable": [
 		{
 			"key": "base_url",

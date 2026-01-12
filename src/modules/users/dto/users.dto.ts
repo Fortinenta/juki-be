@@ -49,8 +49,8 @@ export class QueryUsersDto {
   role?: UserRole;
 
   @IsOptional()
-  @IsEnum(UserStatus)
-  status?: UserStatus;
+  @IsString()
+  status?: string;
 
   @IsOptional()
   page?: number = 1;

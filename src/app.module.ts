@@ -27,6 +27,7 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { AdministrativeModule } from './modules/administrative/administrative.module';
 import { FeedbacksModule } from './modules/feedbacks/feedbacks.module';
 import { AttachmentsModule } from './modules/attachments/attachments.module';
+import { TasksModule } from './modules/tasks/tasks.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { AttachmentsModule } from './modules/attachments/attachments.module';
     AdministrativeModule,
     FeedbacksModule,
     AttachmentsModule,
+    TasksModule,
   ],
   controllers: [HealthController],
   providers: [

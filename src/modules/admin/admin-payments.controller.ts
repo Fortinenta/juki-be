@@ -5,6 +5,8 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
 import { VerifyPaymentDto } from './dto/admin-payments.dto';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { JwtUser } from '../auth/types/jwt-user.type';
 
 @Controller('admin/payments')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -16,7 +18,8 @@ export class AdminPaymentsController {
   async verifyPayment(
     @Param('userId') userId: string,
     @Body() body: VerifyPaymentDto,
+    @CurrentUser() admin: JwtUser,
   ) {
-    return this.adminPaymentsService.verifyPayment(userId, body);
+    return this.adminPaymentsService.verifyPayment(userId, body, admin.id);
   }
 }

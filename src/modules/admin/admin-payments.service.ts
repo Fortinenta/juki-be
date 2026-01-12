@@ -11,7 +11,7 @@ export class AdminPaymentsService {
     private readonly trainingFlowService: TrainingFlowService,
   ) {}
 
-  async verifyPayment(userId: string, dto: VerifyPaymentDto) {
+  async verifyPayment(userId: string, dto: VerifyPaymentDto, adminId: string) {
     const payment = await this.prisma.attachment.findFirst({
       where: {
         userId,
@@ -32,7 +32,7 @@ export class AdminPaymentsService {
       await this.trainingFlowService.transitionStatus({
         userId,
         nextStatus: TRAINING_STATUS.PAYMENT_REQUIRED,
-        actorId: 'ADMIN',
+        actorId: adminId,
         metadata: {
           action: 'REJECT_PAYMENT',
           paymentId: payment.id,
@@ -47,7 +47,7 @@ export class AdminPaymentsService {
     await this.trainingFlowService.transitionStatus({
       userId,
       nextStatus: TRAINING_STATUS.PAYMENT_VERIFIED,
-      actorId: 'ADMIN',
+      actorId: adminId,
       metadata: {
         action: 'VERIFY_PAYMENT',
         paymentId: payment.id,

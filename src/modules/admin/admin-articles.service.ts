@@ -2,6 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { TRAINING_STATUS } from '../../common/constants/training-status.constants';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TrainingFlowService } from '../training-flow/training-flow.service';
+import { AuditAction } from '@prisma/client';
 
 @Injectable()
 export class AdminArticlesService {
@@ -13,7 +14,7 @@ export class AdminArticlesService {
   /**
    * Verifikasi artikel oleh admin
    */
-  async verify(userId: string, comment?: string) {
+  async verify(userId: string, adminId: string, comment?: string) {
     const flow = await this.prisma.userTrainingFlow.findUnique({
       where: { userId },
     });
@@ -29,7 +30,7 @@ export class AdminArticlesService {
     await this.trainingFlowService.transitionStatus({
       userId,
       nextStatus: TRAINING_STATUS.ARTICLE_VERIFIED,
-      actorId: 'ADMIN',
+      actorId: adminId,
       metadata: {
         action: 'VERIFY_ARTICLE',
         comment,
@@ -43,7 +44,7 @@ export class AdminArticlesService {
    * Tolak / pending verifikasi artikel (future use)
    * Status tetap ARTICLE_WAITING
    */
-  async reject(userId: string, comment?: string) {
+  async reject(userId: string, adminId: string, comment?: string) {
     const flow = await this.prisma.userTrainingFlow.findUnique({
       where: { userId },
     });
@@ -59,8 +60,8 @@ export class AdminArticlesService {
     // Tidak ada transisi status
     await this.prisma.auditLog.create({
       data: {
-        userId,
-        action: 'UPDATE_PROFILE', // pakai AuditAction existing
+        userId: adminId,
+        action: AuditAction.UPDATE_PROFILE,
         metadata: {
           action: 'REJECT_ARTICLE',
           comment,

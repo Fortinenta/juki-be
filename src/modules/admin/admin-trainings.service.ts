@@ -66,7 +66,32 @@ export class AdminTrainingsService {
         flows: {
           include: {
             user: {
-              select: { id: true, email: true, profile: { select: { fullName: true } } },
+              select: {
+                id: true,
+                email: true,
+                status: true,
+                profile: {
+                  select: {
+                    fullName: true,
+                    nim: true,
+                    phone: true,
+                    faculty: true,
+                    major: true,
+                    studyProgram: true,
+                    enrollmentYear: true,
+                    birthPlace: true,
+                    birthDate: true,
+                    gender: true,
+                    ktmPath: true,
+                  },
+                },
+              },
+            },
+            status: {
+              select: {
+                label: true,
+                description: true,
+              },
             },
           },
         },
