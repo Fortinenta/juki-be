@@ -1,8 +1,8 @@
 {
 	"info": {
-		"_postman_id": "8481523c-d389-482a-a551-3932267b2038",
+		"_postman_id": "juki-api-v1",
 		"name": "JUKI API",
-		"description": "API Documentation for JUKI Backend. Includes flows for Public, User, Admin, and Super Admin.",
+		"description": "Postman Collection for JUKI Backend API (NestJS). Covers Authentication, User Training Flow, Admin Management, and System Utilities.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -10,27 +10,13 @@
 			"name": "Auth",
 			"item": [
 				{
-					"name": "Login (Super Admin)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"access_token\", jsonData.accessToken);",
-									"pm.environment.set(\"refresh_token\", jsonData.refreshToken);",
-									"pm.environment.set(\"user_id\", jsonData.user.id);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
+					"name": "Login",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"superadmin@juki.com\",\n    \"password\": \"SuperAdmin123!\"\n}",
+							"raw": "{\n    \"email\": \"user@juki.com\",\n    \"password\": \"User123!\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -38,40 +24,27 @@
 							}
 						},
 						"url": {
-							"raw": "{{base_url}}/auth/login",
+							"raw": "{{baseUrl}}/auth/login",
 							"host": [
-								"{{base_url}}"
+								"{{baseUrl}}"
 							],
 							"path": [
 								"auth",
 								"login"
 							]
-						}
+						},
+						"description": "Authenticate user and receive Access/Refresh tokens."
 					},
 					"response": []
 				},
 				{
-					"name": "Login (Admin)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"access_token\", jsonData.accessToken);",
-									"pm.environment.set(\"refresh_token\", jsonData.refreshToken);",
-									"pm.environment.set(\"user_id\", jsonData.user.id);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
+					"name": "Register",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"admin@juki.com\",\n    \"password\": \"Admin123!\"\n}",
+							"raw": "{\n    \"email\": \"newuser@juki.com\",\n    \"password\": \"User123!\",\n    \"fullName\": \"New Student\",\n    \"nim\": \"12345678\",\n    \"phone\": \"08123456789\",\n    \"birthPlace\": \"Jakarta\",\n    \"birthDate\": \"2000-01-01\",\n    \"gender\": \"MALE\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -79,172 +52,154 @@
 							}
 						},
 						"url": {
-							"raw": "{{base_url}}/auth/login",
+							"raw": "{{baseUrl}}/auth/register",
 							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"login"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Login (User)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"access_token\", jsonData.accessToken);",
-									"pm.environment.set(\"refresh_token\", jsonData.refreshToken);",
-									"pm.environment.set(\"user_id\", jsonData.user.id);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"user_payment_required_1@example.com\",\n    \"password\": \"password123\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/login",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"login"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Register (New User)",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"newuser@juki.com\",\n    \"password\": \"User123!\",\n    \"fullName\": \"New Juki User\",\n    \"nim\": \"NEW001\",\n    \"phone\": \"08999999999\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/register",
-							"host": [
-								"{{base_url}}"
+								"{{baseUrl}}"
 							],
 							"path": [
 								"auth",
 								"register"
 							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Public / Common",
-			"item": [
-				{
-					"name": "Health Check",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/health",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"health"
-							]
-						}
+						},
+						"description": "Register a new student account."
 					},
 					"response": []
 				},
 				{
-					"name": "Get Settings (Public)",
+					"name": "Refresh Token",
 					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/settings",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"settings"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Available Trainings",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/trainings",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"trainings"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "User",
-			"item": [
-				{
-					"name": "Profile",
-					"item": [
-						{
-							"name": "Get Me (Profile)",
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/profiles/me",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"profiles",
-										"me"
-									]
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{refreshToken}}",
+									"type": "string"
 								}
-							},
-							"response": []
-						}
-					]
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/refresh",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"refresh"
+							]
+						},
+						"description": "Use a valid Refresh Token to obtain a new Access Token. Requires 'Bearer' token in Authorization header to be the REFRESH TOKEN."
+					},
+					"response": []
 				},
 				{
-					"name": "Training Flow",
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/logout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"logout"
+							]
+						},
+						"description": "Invalidate current session/refresh token."
+					},
+					"response": []
+				},
+				{
+					"name": "Change Password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"oldPassword\": \"User123!\",\n    \"newPassword\": \"NewPassword123!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/change-password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"change-password"
+							]
+						},
+						"description": "Change the authenticated user's password."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Profiles",
+			"item": [
+				{
+					"name": "Get My Profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/profiles/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"profiles",
+								"me"
+							]
+						},
+						"description": "Retrieve the currently logged-in user's profile and training status."
+					},
+					"response": []
+				},
+				{
+					"name": "Update My Profile",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"fullName\": \"Updated Name\",\n    \"phone\": \"0899999999\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/profiles/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"profiles",
+								"me"
+							]
+						},
+						"description": "Update specific fields of the user profile."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User Flow",
+			"item": [
+				{
+					"name": "Payments",
 					"item": [
 						{
 							"name": "Upload Payment Proof",
@@ -257,41 +212,47 @@
 										{
 											"key": "file",
 											"type": "file",
-											"src": []
+											"description": "Image file (jpg, png)"
 										}
 									]
 								},
 								"url": {
-									"raw": "{{base_url}}/payments/upload",
+									"raw": "{{baseUrl}}/payments/upload",
 									"host": [
-										"{{base_url}}"
+										"{{baseUrl}}"
 									],
 									"path": [
 										"payments",
 										"upload"
 									]
-								}
+								},
+								"description": "Upload a payment receipt image. Moves status to PAYMENT_WAITING."
 							},
-							"response": []
-						},
+						"response": []
+					}
+				]
+				},
+				{
+					"name": "Administrative",
+					"item": [
 						{
-							"name": "Start Administrative Stage",
+							"name": "Start Administrative Phase",
 							"request": {
 								"method": "POST",
 								"header": [],
 								"url": {
-									"raw": "{{base_url}}/administrative/start",
+									"raw": "{{baseUrl}}/administrative/start",
 									"host": [
-										"{{base_url}}"
+										"{{baseUrl}}"
 									],
 									"path": [
 										"administrative",
 										"start"
 									]
 								},
-								"description": "Transition from PAYMENT_VERIFIED to ADMINISTRATIVE_REQUIRED"
+								"description": "Acknowledge payment verification and start administrative phase (completing Google Forms, etc.). Moves status to ADMINISTRATIVE_REQUIRED."
 							},
-							"response": []
+						"response": []
 						},
 						{
 							"name": "Confirm Administrative Data",
@@ -299,18 +260,162 @@
 								"method": "POST",
 								"header": [],
 								"url": {
-									"raw": "{{base_url}}/administrative/confirm",
+									"raw": "{{baseUrl}}/administrative/confirm",
 									"host": [
-										"{{base_url}}"
+										"{{baseUrl}}"
 									],
 									"path": [
 										"administrative",
 										"confirm"
 									]
 								},
-								"description": "Requires status: ADMINISTRATIVE_REQUIRED. Transitions to WAITING_ADMINISTRATIVE."
+								"description": "Confirm that administrative data (e.g., Google Form) has been filled. Moves status to WAITING_ADMINISTRATIVE."
 							},
-							"response": []
+						"response": []
+						}
+					]
+				},
+				{
+					"name": "Articles",
+					"item": [
+						{
+							"name": "Confirm Submission",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"articleTitle\": \"My Research Title\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/articles/confirm-submission",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"articles",
+										"confirm-submission"
+									]
+								},
+								"description": "Confirm that the article has been submitted to the OJS system. Moves status to ARTICLE_VERIFIED (or WAITING depending on flow logic)."
+							},
+						"response": []
+						},
+						{
+							"name": "Confirm Revision",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/articles/confirm-revision",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"articles",
+										"confirm-revision"
+									]
+								},
+								"description": "Confirm that requested revisions have been submitted."
+							},
+						"response": []
+						},
+						{
+							"name": "Download LoA",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/articles/loa",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"articles",
+										"loa"
+									]
+								},
+								"description": "Download the Letter of Acceptance (if available)."
+							},
+						"response": []
+						}
+					]
+				},
+				{
+					"name": "Trainings",
+					"item": [
+						{
+							"name": "Get Available Trainings",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/trainings",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"trainings"
+									]
+								},
+								"description": "Public endpoint to list available training batches."
+							},
+						"response": []
+						},
+						{
+							"name": "Get My Training",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/trainings/my-training",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"trainings",
+										"my-training"
+									]
+								},
+								"description": "Get details of the training currently assigned to the user."
+							},
+						"response": []
+						},
+						{
+							"name": "Get Training By ID",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/trainings/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"trainings",
+										":id"
+									]
+								},
+								"variable": [
+									{
+										"key": "id",
+										"value": ""
+									}
+								],
+								"description": "Get details of a specific training batch."
+							},
+						"response": []
 						},
 						{
 							"name": "Select Training",
@@ -318,91 +423,80 @@
 								"method": "POST",
 								"header": [],
 								"url": {
-									"raw": "{{base_url}}/trainings/:id/join",
+									"raw": "{{baseUrl}}/trainings/:id/select",
 									"host": [
-										"{{base_url}}"
+										"{{baseUrl}}"
 									],
 									"path": [
 										"trainings",
 										":id",
-										"join"
-									],
-									"variable": [
-										{
-											"key": "id",
-											"value": "TRAINING_ID_HERE"
-										}
+										"select"
 									]
 								},
-								"description": "Requires status: ARTICLE_VERIFIED"
+								"variable": [
+									{
+										"key": "id",
+										"value": "training-uuid"
+									}
+								],
+								"description": "User selects a specific training batch to attend."
 							},
-							"response": []
+						"response": []
 						}
 					]
 				}
 			]
 		},
 		{
-			"name": "Admin / Super Admin",
+			"name": "Admin Area",
+			"description": "Requires ADMIN or SUPER_ADMIN role",
 			"item": [
 				{
-					"name": "Dashboard & Users",
+					"name": "Payments",
 					"item": [
 						{
-							"name": "Get User Stats",
+							"name": "Verify Payment",
 							"request": {
-								"method": "GET",
+								"method": "POST",
 								"header": [],
-								"url": {
-									"raw": "{{base_url}}/users/stats",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"users",
-										"stats"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "List Users (Verification Needed)",
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/users?status=PAYMENT_WAITING",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"users"
-									],
-									"query": [
-										{
-											"key": "status",
-											"value": "PAYMENT_WAITING"
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"action\": \"ACCEPT\",\n    \"reason\": \"Valid transfer\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
 										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/payments/:userId/verify",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"admin",
+										"payments",
+										":userId",
+										"verify"
 									]
 								},
-								"description": "Use status=PAYMENT_WAITING or status=WAITING_ADMINISTRATIVE"
+								"description": "Approve or Reject a user's payment. Action: 'ACCEPT' | 'REJECT'."
 							},
-							"response": []
+						"response": []
 						}
 					]
 				},
 				{
-					"name": "Verification Actions",
+					"name": "Articles",
 					"item": [
 						{
-							"name": "Verify Payment (ACCEPT)",
+							"name": "Verify Article",
 							"request": {
 								"method": "POST",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"action\": \"ACCEPT\"\n}",
+									"raw": "{\n    \"comment\": \"Article verified on OJS\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -410,34 +504,29 @@
 									}
 								},
 								"url": {
-									"raw": "{{base_url}}/admin/payments/:userId/verify",
+									"raw": "{{baseUrl}}/admin/articles/:userId/verify",
 									"host": [
-										"{{base_url}}"
+										"{{baseUrl}}"
 									],
 									"path": [
 										"admin",
-										"payments",
+										"articles",
 										":userId",
 										"verify"
-									],
-									"variable": [
-										{
-											"key": "userId",
-											"value": "{{user_id}}"
-										}
 									]
-								}
+								},
+								"description": "Admin manually verifies that the user has uploaded the article to the external OJS system."
 							},
-							"response": []
+						"response": []
 						},
 						{
-							"name": "Verify Payment (REJECT)",
+							"name": "Reject Article",
 							"request": {
 								"method": "POST",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"action\": \"REJECT\",\n    \"reason\": \"Bukti transfer tidak jelas.\"\n}",
+									"raw": "{\n    \"comment\": \"Article not found in OJS\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -445,34 +534,55 @@
 									}
 								},
 								"url": {
-									"raw": "{{base_url}}/admin/payments/:userId/verify",
+									"raw": "{{baseUrl}}/admin/articles/:userId/reject",
 									"host": [
-										"{{base_url}}"
+										"{{baseUrl}}"
 									],
 									"path": [
 										"admin",
-										"payments",
+										"articles",
 										":userId",
-										"verify"
-									],
-									"variable": [
-										{
-											"key": "userId",
-											"value": "{{user_id}}"
-										}
+										"reject"
 									]
-								}
+								},
+								"description": "Admin rejects the article verification (e.g. not found)."
 							},
-							"response": []
+						"response": []
+						}
+					]
+				},
+				{
+					"name": "Administrative",
+					"item": [
+						{
+							"name": "Complete Administrative",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/administrative/:userId/complete",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"admin",
+										"administrative",
+										":userId",
+										"complete"
+									]
+								},
+								"description": "Mark a user's administrative requirements (Google Form) as complete."
+							},
+						"response": []
 						},
 						{
-							"name": "Assign OJS Account",
+							"name": "Create OJS Account",
 							"request": {
 								"method": "POST",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"username\": \"juki_user\",\n    \"password\": \"Juki123!\",\n    \"journalCode\": \"JUKI-01\",\n    \"journalLink\": \"https://jurnal.example.com\"\n}",
+									"raw": "{\n    \"username\": \"user_ojs_1\",\n    \"password\": \"password123\",\n    \"journalCode\": \"JUKI_V1\",\n    \"journalLink\": \"http://ojs.example.com\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -480,35 +590,34 @@
 									}
 								},
 								"url": {
-									"raw": "{{base_url}}/admin/administrative/:userId/ojs",
+									"raw": "{{baseUrl}}/admin/administrative/:userId/ojs",
 									"host": [
-										"{{base_url}}"
+										"{{baseUrl}}"
 									],
 									"path": [
 										"admin",
 										"administrative",
 										":userId",
 										"ojs"
-									],
-									"variable": [
-										{
-											"key": "userId",
-											"value": "{{user_id}}"
-										}
 									]
 								},
-								"description": "Requires status: WAITING_ADMINISTRATIVE. Transitions user to ARTICLE_WAITING."
+								"description": "Admin inputs the created OJS credentials for the user."
 							},
-							"response": []
-						},
+						"response": []
+						}
+					]
+				},
+				{
+					"name": "Review & LoA",
+					"item": [
 						{
-							"name": "Record Attendance (PRESENT)",
+							"name": "Accept Review",
 							"request": {
 								"method": "POST",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"trainingId\": \"UUID-JADWAL-PELATIHAN\",\n    \"userId\": \"UUID-USER-PESERTA\",\n    \"status\": \"PRESENT\"\n}",
+									"raw": "{\n    \"comment\": \"Review passed with minor revisions\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -516,32 +625,214 @@
 									}
 								},
 								"url": {
-									"raw": "{{base_url}}/admin/trainings/attendance",
+									"raw": "{{baseUrl}}/admin/review-loa/:userId/review/accept",
 									"host": [
-										"{{base_url}}"
+										"{{baseUrl}}"
 									],
 									"path": [
 										"admin",
-										"trainings",
-										"attendance"
+										"review-loa",
+										":userId",
+										"review",
+										"accept"
+									]
+								},
+								"description": "Mark the review process as accepted. Moves to LOA_WAITING."
+							},
+						"response": []
+						},
+						{
+							"name": "Request Revision",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"comment\": \"Major revisions required\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/review-loa/:userId/review/revision",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"admin",
+										"review-loa",
+										":userId",
+										"review",
+										"revision"
+									]
+								},
+								"description": "Mark the review process as needing revision."
+							},
+						"response": []
+						},
+						{
+							"name": "Upload LoA",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "file",
+											"type": "file",
+											"description": "PDF LoA File"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/review-loa/:userId/loa/upload",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"admin",
+										"review-loa",
+										":userId",
+										"loa",
+										"upload"
+									]
+								},
+								"description": "Upload the final LoA PDF for the user. Moves flow to LOA_PUBLISHED (Completed)."
+							},
+						"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "System & Support",
+			"item": [
+				{
+					"name": "Audit Logs",
+					"item": [
+						{
+							"name": "Get All Logs (Admin)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/audit-logs?page=1&limit=10",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"audit-logs"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "10"
+										},
+										{
+											"key": "action",
+											"value": "LOGIN",
+											"disabled": true
+										}
 									]
 								}
 							},
-							"response": []
+								"description": "Retrieve system-wide audit logs."
+							},
+							{
+							"name": "Get My Logs",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/audit-logs/me",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"audit-logs",
+										"me"
+									]
+								},
+								"description": "Retrieve audit logs for the current user."
+							},
+						"response": []
 						}
 					]
 				},
 				{
-					"name": "System Settings",
+					"name": "Sessions",
 					"item": [
 						{
-							"name": "Update Payment & Form Info",
+							"name": "Get My Sessions",
 							"request": {
-								"method": "PATCH",
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/sessions/me",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"sessions",
+										"me"
+									]
+								},
+								"description": "List all active sessions (devices) for the current user."
+							},
+						"response": []
+						},
+						{
+							"name": "Revoke Session",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/sessions/:sessionId/user/:userId",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"sessions",
+										":sessionId",
+										"user",
+										":userId"
+									]
+								},
+								"variable": [
+									{
+										"key": "sessionId",
+										"value": ""
+									},
+									{
+										"key": "userId",
+										"value": ""
+									}
+								],
+								"description": "Revoke a specific session."
+							},
+						"response": []
+						}
+					]
+				},
+				{
+					"name": "Feedbacks",
+					"item": [
+						{
+							"name": "Create Feedback",
+							"request": {
+								"method": "POST",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"payment_bank_name\": \"Bank Mandiri\",\n    \"payment_account_number\": \"900-00-1234567-8\",\n    \"payment_account_name\": \"Bendahara JUKI\",\n    \"payment_amount\": \"150000\",\n    \"admin_form_link\": \"https://forms.gle/sample\"\n}",
+									"raw": "{\n    \"message\": \"Application is running smoothly!\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -549,16 +840,36 @@
 									}
 								},
 								"url": {
-									"raw": "{{base_url}}/settings",
+									"raw": "{{baseUrl}}/feedbacks",
 									"host": [
-										"{{base_url}}"
+										"{{baseUrl}}"
 									],
 									"path": [
-										"settings"
+										"feedbacks"
 									]
-								}
+								},
+								"description": "Submit user feedback."
 							},
-							"response": []
+						"response": []
+						},
+						{
+							"name": "Get My Feedbacks",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/feedbacks/me",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"feedbacks",
+										"me"
+									]
+								},
+								"description": "List feedback submitted by current user."
+							},
+						"response": []
 						}
 					]
 				}
@@ -570,29 +881,44 @@
 		"bearer": [
 			{
 				"key": "token",
-				"value": "{{access_token}}",
+				"value": "{{accessToken}}",
 				"type": "string"
 			}
 		]
 	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
 	"variable": [
 		{
-			"key": "base_url",
+			"key": "baseUrl",
 			"value": "http://localhost:3000/api/v1",
 			"type": "string"
 		},
 		{
-			"key": "access_token",
+			"key": "accessToken",
 			"value": "",
 			"type": "string"
 		},
 		{
-			"key": "refresh_token",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "user_id",
+			"key": "refreshToken",
 			"value": "",
 			"type": "string"
 		}
