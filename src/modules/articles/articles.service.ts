@@ -28,12 +28,9 @@ export class ArticlesService {
       data: { articleTitle },
     });
 
-    await this.trainingFlowService.transitionStatus({
-      userId,
-      nextStatus: TRAINING_STATUS.ARTICLE_WAITING,
-      actorId: userId,
-      metadata: { action: 'CONFIRM_OJS_SUBMISSION', articleTitle },
-    });
+    // NOTE: We do NOT transition status here.
+    // The status remains ARTICLE_WAITING until Admin verifies it manually via OJS check.
+    // However, we should log this action if needed, but for now just returning success is enough.
 
     return {
       message: 'Submission confirmed. Admin will verify your article in OJS.',

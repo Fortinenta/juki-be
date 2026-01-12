@@ -42,7 +42,10 @@ export class AdminAdministrativeService {
 
     await this.prisma.userTrainingFlow.update({
       where: { userId },
-      data: { ojsAccountId: ojs.id },
+      data: { 
+        ojsAccountId: ojs.id,
+        journalCode: data.journalCode, // Sync journalCode to flow table
+      },
     });
 
     await this.trainingFlowService.transitionStatus({

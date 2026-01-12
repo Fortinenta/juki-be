@@ -81,21 +81,23 @@ export class TrainingFlowService {
           data: { statusCode: nextStatus },
         });
 
-        console.log('[Flow] Creating audit log...');
-        // Pastikan enum valid
-        console.log('AuditAction:', AuditAction.UPDATE_PROFILE); 
-        
-        await tx.auditLog.create({
-          data: {
-            userId: actorId,
-            action: AuditAction.UPDATE_PROFILE,
-            metadata: {
-              from: flow.statusCode,
-              to: nextStatus,
-              ...metadata,
+        try {
+          console.log('[Flow] Attempting to create audit log...');
+          await tx.auditLog.create({
+            data: {
+              userId: actorId,
+              action: AuditAction.UPDATE_PROFILE, // Using existing enum
+              metadata: {
+                from: flow.statusCode,
+                to: nextStatus,
+                ...metadata,
+              },
             },
-          },
-        });
+          });
+        } catch (auditError) {
+          console.error('[Flow] Non-fatal Audit Log Error:', auditError.message);
+          // We don't throw here to allow the status update to persist
+        }
         
         console.log('[Flow] Transaction complete.');
         return updated;

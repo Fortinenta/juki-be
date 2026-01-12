@@ -16,6 +16,7 @@ export class ProfilesService {
             trainingFlow: {
               include: {
                 ojsAccount: true,
+                training: true,
               },
             },
           },
