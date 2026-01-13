@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   api:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile
     image: juki-be:latest
     container_name: juki-api
     restart: unless-stopped
@@ -10,21 +12,21 @@ services:
       - "${APP_PORT:-3000}:3000"
     environment:
       NODE_ENV: production
-      APP_PORT: 3000
+      # Database connection
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_USER: ${POSTGRES_USER:-juki}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-juki123}
       POSTGRES_DB: ${POSTGRES_DB:-juki_db}
-      # Database connection (using the postgres service name as host)
       DATABASE_URL: postgresql://${POSTGRES_USER:-juki}:${POSTGRES_PASSWORD:-juki123}@postgres:5432/${POSTGRES_DB:-juki_db}?schema=public
-      # JWT Secrets (Should be overridden in production via .env file)
-      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-your-super-secret-access-key}
+      # Secrets (Pastikan diset di .env server)
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
       JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-super-secret-refresh-key}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     volumes:
       - ./uploads:/app/uploads
       - ./logs:/app/logs
@@ -43,27 +45,17 @@ services:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-juki} -d ${POSTGRES_DB:-juki_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - juki-network
-
-# Redis service removed as it appeared unused in the codebase.
-# If needed, uncomment the following block:
-#  redis:
-#    image: redis:7-alpine
-#    container_name: juki-redis
-#    restart: unless-stopped
-#    ports:
-#      - '6379:6379'
-#    volumes:
-#      - redis_data:/data
-#    networks:
-#      - juki-network
 
 volumes:
   postgres_data:
     driver: local
-  # redis_data:
-  #   driver: local
 
 networks:
   juki-network:

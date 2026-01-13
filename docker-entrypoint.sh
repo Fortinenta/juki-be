@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-# Wait for the database to be ready using pg_isready
+# Wait for the database to be ready
 echo "Waiting for database connection at $POSTGRES_HOST:$POSTGRES_PORT..."
 until pg_isready -h "$POSTGRES_HOST" -p "${POSTGRES_PORT:-5432}" -U "${POSTGRES_USER:-juki}"; do
   echo "Waiting for database..."
@@ -9,10 +9,10 @@ until pg_isready -h "$POSTGRES_HOST" -p "${POSTGRES_PORT:-5432}" -U "${POSTGRES_
 done
 echo "Database is ready!"
 
-# Run migrations
+# Run database migrations (deploy mode)
 echo "Running database migrations..."
 npx prisma migrate deploy
 
-# Start the application with dumb-init
+# Start the application
 echo "Starting application..."
-exec dumb-init "$@"
+exec dumb-init node dist/main.js
