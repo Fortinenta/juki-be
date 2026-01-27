@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "AttachmentType" ADD VALUE 'BEBAS_TANGGUNGAN';

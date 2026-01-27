@@ -41,7 +41,7 @@ lerna-debug.log*
 .env.*.local
 
 # Prisma
-prisma/migrations/
+# prisma/migrations/
 
 # Temp files
 *.swp
