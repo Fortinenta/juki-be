@@ -166,7 +166,24 @@ async function main() {
   }
   console.log('✅ Users seeded');
 
-  // --- 3. Training Schedules (HARD RESET) ---
+  // --- 3. Lookup Journals ---
+  console.log('Populating LookupJournals...');
+  const journals = [
+    { code: 'JIE', name: 'Journal of Industrial Engineering', isActive: true },
+    { code: 'JOEFI', name: 'Journal of Economics and Finance', isActive: true },
+    { code: 'JOESMENT', name: 'Journal of Education and Management', isActive: true },
+  ];
+
+  for (const journal of journals) {
+    await prisma.lookupJournal.upsert({
+      where: { code: journal.code },
+      update: {},
+      create: journal,
+    });
+  }
+  console.log('✅ LookupJournals seeded');
+
+  // --- 4. Training Schedules (HARD RESET) ---
   console.log('Cleaning up old dummy trainings...');
   // Hapus training yang batch-nya dimulai dengan 'BATCH-' agar bersih
   await prisma.training.deleteMany({
@@ -189,55 +206,98 @@ async function main() {
   };
 
   const trainings = [
+    // JIE Trainings
     {
-      batch: 'BATCH-PAST',
-      title: 'Pelatihan Jurnal (Sudah Lewat)',
-      startAt: addDays(today, -2), // 2 hari lalu
+      batch: 'BATCH-JIE-PAST',
+      title: 'Pelatihan Jurnal JIE (Sudah Lewat)',
+      startAt: addDays(today, -2),
       endAt: addDays(today, -1),
       location: 'Zoom Meeting',
-      journalCode: 'JUKI-VOL1',
+      journalCode: 'JIE',
       mentorName: 'Dr. Strange',
       quota: 100,
     },
     {
-      batch: 'BATCH-TODAY-FUTURE',
-      title: 'Pelatihan Jurnal (Hari Ini - Nanti Sore)',
-      startAt: addHours(today, 5), // 5 jam dari sekarang (Pasti Future)
+      batch: 'BATCH-JIE-TODAY',
+      title: 'Pelatihan Jurnal JIE (Hari Ini - Nanti Sore)',
+      startAt: addHours(today, 5),
       endAt: addHours(today, 8),
       location: 'Google Meet',
-      journalCode: 'JUKI-VOL1',
+      journalCode: 'JIE',
       mentorName: 'Prof. X',
       quota: 50,
     },
     {
-      batch: 'BATCH-TOMORROW',
-      title: 'Pelatihan Jurnal (Besok)',
-      startAt: addDays(today, 1), // Besok
+      batch: 'BATCH-JIE-TOMORROW',
+      title: 'Pelatihan Jurnal JIE (Besok)',
+      startAt: addDays(today, 1),
       endAt: addHours(addDays(today, 1), 3),
       location: 'Zoom Meeting',
-      journalCode: 'JUKI-VOL2',
+      journalCode: 'JIE',
       mentorName: 'Tony Stark',
       quota: 50,
     },
+    // JOEFI Trainings
     {
-      batch: 'BATCH-NEXT-WEEK',
-      title: 'Pelatihan Jurnal (Minggu Depan)',
+      batch: 'BATCH-JOEFI-TODAY',
+      title: 'Pelatihan Jurnal JOEFI (Hari Ini)',
+      startAt: addHours(today, 6),
+      endAt: addHours(today, 9),
+      location: 'Microsoft Teams',
+      journalCode: 'JOEFI',
+      mentorName: 'Dr. Banner',
+      quota: 40,
+    },
+    {
+      batch: 'BATCH-JOEFI-NEXT-WEEK',
+      title: 'Pelatihan Jurnal JOEFI (Minggu Depan)',
       startAt: addDays(today, 7),
       endAt: addHours(addDays(today, 7), 4),
       location: 'Offline - Aula Utama',
-      journalCode: 'JUKI-VOL2',
+      journalCode: 'JOEFI',
       mentorName: 'Bruce Banner',
       quota: 200,
     },
     {
-      batch: 'BATCH-FULL-QUOTA',
-      title: 'Pelatihan Jurnal (Penuh)',
+      batch: 'BATCH-JOEFI-FULL',
+      title: 'Pelatihan Jurnal JOEFI (Penuh)',
       startAt: addDays(today, 2),
       endAt: addHours(addDays(today, 2), 2),
       location: 'Small Room',
-      journalCode: 'JUKI-VOL3',
+      journalCode: 'JOEFI',
       mentorName: 'Full Man',
-      quota: 0, // Kuota habis
+      quota: 0,
+    },
+    // JOESMENT Trainings
+    {
+      batch: 'BATCH-JOESMENT-TOMORROW',
+      title: 'Pelatihan Jurnal JOESMENT (Besok)',
+      startAt: addDays(today, 1),
+      endAt: addHours(addDays(today, 1), 4),
+      location: 'Google Meet',
+      journalCode: 'JOESMENT',
+      mentorName: 'Prof. McGonagall',
+      quota: 60,
+    },
+    {
+      batch: 'BATCH-JOESMENT-NEXT-WEEK',
+      title: 'Pelatihan Jurnal JOESMENT (Minggu Depan)',
+      startAt: addDays(today, 8),
+      endAt: addHours(addDays(today, 8), 3),
+      location: 'Zoom Meeting',
+      journalCode: 'JOESMENT',
+      mentorName: 'Dr. Dumbledore',
+      quota: 80,
+    },
+    {
+      batch: 'BATCH-JOESMENT-TWO-WEEKS',
+      title: 'Pelatihan Jurnal JOESMENT (2 Minggu Lagi)',
+      startAt: addDays(today, 14),
+      endAt: addHours(addDays(today, 14), 5),
+      location: 'Offline - Lab Komputer',
+      journalCode: 'JOESMENT',
+      mentorName: 'Prof. Snape',
+      quota: 30,
     },
   ];
 
@@ -246,7 +306,7 @@ async function main() {
   }
   console.log(`✅ Created ${trainings.length} Fresh Training Schedules`);
 
-  // --- 4. System Configs ---
+  // --- 5. System Configs ---
   console.log('Seeding System Configs...');
   const configs = [
     { key: 'payment_bank_name', value: 'Bank BRI', description: 'Nama Bank Tujuan Pembayaran' },

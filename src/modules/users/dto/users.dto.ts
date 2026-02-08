@@ -1,10 +1,16 @@
-import { IsEmail, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsEnum, IsOptional, IsString, IsUrl, MinLength } from 'class-validator';
 import { UserRole, UserStatus } from '@prisma/client';
 
 export class UpdateUserDto {
+  // User basic info
   @IsEmail()
   @IsOptional()
   email?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
+  password?: string;
 
   @IsEnum(UserRole)
   @IsOptional()
@@ -14,6 +20,7 @@ export class UpdateUserDto {
   @IsOptional()
   status?: UserStatus;
 
+  // Profile info
   @IsOptional()
   @IsString()
   fullName?: string;
@@ -37,6 +44,28 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   gender?: string;
+
+  // Training flow info
+  @IsOptional()
+  @IsString()
+  articleTitle?: string;
+
+  @IsOptional()
+  @IsString()
+  journalCode?: string;
+
+  // OJS Account info (optional)
+  @IsOptional()
+  @IsString()
+  ojsUsername?: string;
+
+  @IsOptional()
+  @IsString()
+  ojsPassword?: string;
+
+  @IsOptional()
+  @IsUrl()
+  ojsJournalLink?: string;
 }
 
 export class QueryUsersDto {

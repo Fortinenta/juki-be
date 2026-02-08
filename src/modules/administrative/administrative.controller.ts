@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Req } from '@nestjs/common';
 import { AdministrativeService } from './administrative.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TrainingStatus } from '../../common/constants/training-status.constants';
@@ -10,6 +10,11 @@ import { TRAINING_STATUS } from '../../common/constants/training-status.constant
 @UseGuards(JwtAuthGuard, FlowStatusGuard)
 export class AdministrativeController {
   constructor(private readonly service: AdministrativeService) {}
+
+  @Get('journals')
+  async getAvailableJournals() {
+    return this.service.getAvailableJournals();
+  }
 
   @Post('start')
   @FlowStatus(TRAINING_STATUS.PAYMENT_VERIFIED)

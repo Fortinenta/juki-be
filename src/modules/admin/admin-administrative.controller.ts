@@ -12,6 +12,19 @@ export class AdminAdministrativeController {
   constructor(private readonly service: AdminAdministrativeService) {}
 
   /**
+   * Set journal code untuk user (oleh admin)
+   * Bisa dilakukan kapan saja sebelum user memilih training
+   */
+  @Post(':userId/set-journal')
+  async setJournalCode(
+    @Param('userId') userId: string,
+    @Body('journalCode') journalCode: string,
+    @Req() req: any,
+  ) {
+    return this.service.setJournalCode(userId, journalCode, req.user.id);
+  }
+
+  /**
    * Menandai administrasi lengkap
    * ADMINISTRATIVE_REQUIRED -> WAITING_ADMINISTRATIVE
    */
