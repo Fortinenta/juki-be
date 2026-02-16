@@ -21,14 +21,32 @@ export class AllExceptionsFilter implements ExceptionFilter {
         exception instanceof HttpException ? exception.getResponse() : 'Internal server error',
     };
 
-    // Log 401 Unauthorized sebagai WARN (bukan ERROR) karena ini normal behavior
-    if (status === 401) {
+    // Ignore logging untuk error yang tidak penting (noise)
+    const shouldIgnore = 
+      status === 401 || // Unauthorized - normal behavior
+      (status === 404 && (request.url === '/' || request.url === '')) || // Root path 404
+      (status === 404 && request.method === 'PROPFIND'); // WebDAV requests
+
+    if (shouldIgnore) {
+      // Log 401 sebagai WARN
+      if (status === 401) {
+        this.logger.warn(
+          `[${request.method}] ${request.url} - ${status} - Unauthorized access attempt`,
+          'ExceptionFilter',
+        );
+      }
+      // Ignore 404 root path dan PROPFIND (biasanya dari scanner/bot)
+    } else if (status === 400) {
+      // Log 400 Bad Request sebagai WARN (validation error, bukan server error)
+      const message = typeof errorResponse.message === 'object' 
+        ? JSON.stringify(errorResponse.message)
+        : errorResponse.message;
       this.logger.warn(
-        `[${request.method}] ${request.url} - ${status} - Unauthorized access attempt`,
+        `[${request.method}] ${request.url} - ${status} - ${message}`,
         'ExceptionFilter',
       );
     } else {
-      // Log error lainnya sebagai ERROR dengan full details
+      // Log error serius (500, database error, dll) sebagai ERROR dengan full details
       this.logger.error(
         `[${request.method}] ${request.url} - ${status} - ${JSON.stringify(errorResponse)}`,
         exception instanceof Error ? exception.stack : '',

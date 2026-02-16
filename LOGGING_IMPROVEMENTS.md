@@ -8,10 +8,14 @@
 
 **Perubahan:**
 - 401 Unauthorized sekarang di-log sebagai **WARN** (bukan ERROR)
+- 400 Bad Request sekarang di-log sebagai **WARN** (validation error, bukan server error)
+- 404 pada root path (`/`) dan PROPFIND **tidak di-log** (noise dari bot/scanner)
 - Error lainnya tetap di-log sebagai **ERROR** dengan full stack trace
 
 **Alasan:**
 - 401 adalah behavior normal ketika token expired
+- 400 adalah validation error dari user input, bukan server error
+- 404 root dan PROPFIND adalah noise dari bot/scanner
 - Frontend otomatis handle dengan refresh token atau redirect login
 - Mengurangi "noise" di log sehingga error serius lebih mudah terdeteksi
 
@@ -21,11 +25,23 @@
 Trace: UnauthorizedException: Unauthorized
     at JwtAuthGuard.handleRequest (...)
     ... (long stack trace)
+
+[ERROR] ... - [PROPFIND] / - 404 - {...}
+Trace: NotFoundException: Cannot PROPFIND /
+    ... (long stack trace)
+
+[ERROR] ... - [POST] /api/v1/payments/upload - 400 - {"message":"File is required"}
+Trace: BadRequestException: File is required
+    ... (long stack trace)
 ```
 
 **Sesudah:**
 ```
 [WARN] ... - [GET] /api/v1/profiles/me - 401 - Unauthorized access attempt
+
+(PROPFIND dan POST / tidak di-log - noise dari bot)
+
+[WARN] ... - [POST] /api/v1/payments/upload - 400 - {"message":"File is required","hint":"..."}
 ```
 
 ### 2. ✅ Added Origin Tracking for CORS Debugging
@@ -52,9 +68,25 @@ Trace: UnauthorizedException: Unauthorized
 
 **Penambahan:**
 - Penjelasan log levels (INFO, WARN, ERROR)
-- Command untuk filter log exclude 401
+- Command untuk filter log exclude 401 dan 400
 - Tips monitoring CORS issues
-- Penjelasan bahwa 401 adalah normal behavior
+- Penjelasan bahwa 401 dan 400 adalah normal/expected errors
+
+### 4. ✅ Better Error Messages
+
+**File:** `src/modules/payments/payments.controller.ts`
+
+**Perubahan:**
+- Error message untuk file upload sekarang include hint
+- Membantu developer debug masalah file upload
+
+**Format Baru:**
+```json
+{
+  "message": "File is required",
+  "hint": "Make sure to send file with key 'file' in multipart/form-data"
+}
+```
 
 ## Cara Deploy
 
@@ -81,6 +113,11 @@ tail -f logs/log_$(date +%Y-%m-%d).txt | grep "\[ERROR\]" | grep -v "401"
 [WARN] 2026-02-16 14:15:13 [ExceptionFilter] - [GET] /api/v1/profiles/me - 401 - Unauthorized access attempt
 ```
 
+### Validation Error (WARN) - User Input
+```
+[WARN] 2026-02-16 14:20:48 [ExceptionFilter] - [POST] /api/v1/payments/upload - 400 - {"message":"File is required","hint":"Make sure to send file with key 'file' in multipart/form-data"}
+```
+
 ### Error Serius (ERROR)
 ```
 [ERROR] 2026-02-16 14:20:15 [ExceptionFilter] - [POST] /api/v1/users - 500 - {"statusCode":500,"message":"Database connection failed"}
@@ -90,9 +127,14 @@ Trace: Error: Connection timeout
 
 ## Monitoring Commands
 
-### Monitor Error Serius Saja (Exclude 401)
+### Monitor Error Serius Saja (Exclude 401 dan 400)
 ```bash
-tail -f logs/log_$(date +%Y-%m-%d).txt | grep "\[ERROR\]" | grep -v "401"
+tail -f logs/log_$(date +%Y-%m-%d).txt | grep "\[ERROR\]" | grep -v "401\|400"
+```
+
+### Monitor Validation Errors (400)
+```bash
+tail -f logs/log_$(date +%Y-%m-%d).txt | grep "\[WARN\].*400"
 ```
 
 ### Monitor Request dari Frontend Production

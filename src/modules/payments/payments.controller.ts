@@ -62,7 +62,10 @@ export class PaymentsController {
   )
   async uploadPayment(@UploadedFile() file: Express.Multer.File, @Req() req: any) {
     if (!file) {
-      throw new BadRequestException('File is required');
+      throw new BadRequestException({
+        message: 'File is required',
+        hint: 'Make sure to send file with key "file" in multipart/form-data',
+      });
     }
     const request = req as Request & { user: JwtUser };
     const userId = request.user.id;

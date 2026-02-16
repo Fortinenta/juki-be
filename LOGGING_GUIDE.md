@@ -164,6 +164,12 @@ https://juki-service.rurustudio.cloud/log/log_2026-02-16.txt
 [INFO] 2026-02-16 10:30:45 [HTTP] - [POST] /api/v1/auth/login from https://juki-hub.rurustudio.cloud - 234ms - Response: {"success":true,...}
 ```
 
+### Validation Error (WARN) - User Input Error
+```
+[WARN] 2026-02-16 10:31:12 [ExceptionFilter] - [POST] /api/v1/payments/upload - 400 - {"message":"File is required","hint":"..."}
+```
+**Note:** 400 errors adalah validation error dari user input, bukan server error.
+
 ### Unauthorized Access (WARN) - Normal Behavior
 ```
 [WARN] 2026-02-16 10:31:12 [ExceptionFilter] - [GET] /api/v1/profiles/me - 401 - Unauthorized access attempt
@@ -180,8 +186,18 @@ Trace: Error: Database connection failed
 ## Log Levels
 
 - **INFO**: Request berhasil, operasi normal
-- **WARN**: 401 Unauthorized (token expired), hal yang perlu diperhatikan tapi bukan error
-- **ERROR**: Error sebenarnya (500, database error, dll) yang perlu segera ditangani
+- **WARN**: 
+  - 401 Unauthorized (token expired) - normal behavior
+  - 400 Bad Request (validation error) - user input error, bukan server error
+- **ERROR**: Error serius (500, database error, dll) yang perlu segera ditangani
+
+## Error yang Diabaikan (Tidak Di-log)
+
+Untuk mengurangi noise, error berikut tidak di-log:
+- **404 pada root path** (`/`) - biasanya dari bot/scanner
+- **PROPFIND requests** - WebDAV requests dari bot/scanner
+
+Ini adalah request yang tidak relevan dengan aplikasi dan hanya membuat log berantakan.
 
 ## Tips Debugging Production
 
