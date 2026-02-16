@@ -3,16 +3,17 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
-  Logger,
   StreamableFile,
+  Inject,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Request } from 'express';
+import { LoggerService } from '../../modules/logger/logger.service';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
-  private readonly logger = new Logger(LoggingInterceptor.name);
+  constructor(@Inject(LoggerService) private readonly logger: LoggerService) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest<Request>();
@@ -41,7 +42,10 @@ export class LoggingInterceptor implements NestInterceptor {
           logData = logData.substring(0, 1000) + '... (truncated)';
         }
 
-        this.logger.log(`[${method}] ${url} - ${responseTime}ms - Response: ${logData}`);
+        this.logger.log(
+          `[${method}] ${url} - ${responseTime}ms - Response: ${logData}`,
+          'HTTP',
+        );
       }),
     );
   }
