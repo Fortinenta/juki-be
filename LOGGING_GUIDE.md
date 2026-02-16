@@ -80,14 +80,17 @@ less logs/log_2026-02-16.txt
 ### 3. Filter Log Berdasarkan Level
 
 ```bash
-# Hanya ERROR
+# Hanya ERROR (masalah serius)
 grep "\[ERROR\]" logs/log_$(date +%Y-%m-%d).txt
 
-# Hanya WARNING
+# Hanya WARNING (401 unauthorized, dll)
 grep "\[WARN\]" logs/log_$(date +%Y-%m-%d).txt
 
 # ERROR dan WARN
 grep -E "\[ERROR\]|\[WARN\]" logs/log_$(date +%Y-%m-%d).txt
+
+# Hanya INFO (request berhasil)
+grep "\[INFO\]" logs/log_$(date +%Y-%m-%d).txt
 ```
 
 ### 4. Filter Log Berdasarkan Endpoint
@@ -109,11 +112,14 @@ grep "POST.*login" logs/log_$(date +%Y-%m-%d).txt
 # Cari CORS error
 grep -i "cors" logs/log_$(date +%Y-%m-%d).txt
 
-# Cari 401 Unauthorized
-grep "401" logs/log_$(date +%Y-%m-%d).txt
+# Cari error serius (bukan 401)
+grep "\[ERROR\]" logs/log_$(date +%Y-%m-%d).txt | grep -v "401"
 
 # Cari database error
 grep -i "prisma\|database" logs/log_$(date +%Y-%m-%d).txt
+
+# Cari 500 Internal Server Error
+grep "500" logs/log_$(date +%Y-%m-%d).txt
 ```
 
 ### 6. Statistik Request
@@ -153,27 +159,42 @@ https://juki-service.rurustudio.cloud/log/log_2026-02-16.txt
 
 ## Format Log
 
-### Request Log
+### Request Log (INFO)
 ```
-[INFO] 2026-02-16 10:30:45 [LoggingInterceptor] - [POST] /api/v1/auth/login - 234ms - Response: {"success":true,...}
+[INFO] 2026-02-16 10:30:45 [HTTP] - [POST] /api/v1/auth/login from https://juki-hub.rurustudio.cloud - 234ms - Response: {"success":true,...}
 ```
 
-### Error Log
+### Unauthorized Access (WARN) - Normal Behavior
 ```
-[ERROR] 2026-02-16 10:31:12 [ExceptionsFilter] - Database connection failed
-Trace: Error: Connection timeout
+[WARN] 2026-02-16 10:31:12 [ExceptionFilter] - [GET] /api/v1/profiles/me - 401 - Unauthorized access attempt
+```
+**Note:** 401 errors adalah normal ketika token expired. Frontend akan otomatis refresh token atau redirect ke login.
+
+### Error Log (ERROR)
+```
+[ERROR] 2026-02-16 10:31:12 [ExceptionFilter] - [POST] /api/v1/users - 500 - {"statusCode":500,...}
+Trace: Error: Database connection failed
     at PrismaClient.connect (...)
 ```
 
+## Log Levels
+
+- **INFO**: Request berhasil, operasi normal
+- **WARN**: 401 Unauthorized (token expired), hal yang perlu diperhatikan tapi bukan error
+- **ERROR**: Error sebenarnya (500, database error, dll) yang perlu segera ditangani
+
 ## Tips Debugging Production
 
-### 1. Monitor Error Real-time
+### 1. Monitor Error Real-time (Exclude 401)
 ```bash
-# Terminal 1: Monitor semua error
-tail -f logs/log_$(date +%Y-%m-%d).txt | grep --line-buffered "\[ERROR\]"
+# Terminal 1: Monitor error serius saja (exclude 401 yang normal)
+tail -f logs/log_$(date +%Y-%m-%d).txt | grep --line-buffered "\[ERROR\]" | grep -v "401"
 
 # Terminal 2: Monitor CORS issues
 tail -f logs/log_$(date +%Y-%m-%d).txt | grep --line-buffered -i "cors"
+
+# Terminal 3: Monitor semua request dari frontend
+tail -f logs/log_$(date +%Y-%m-%d).txt | grep --line-buffered "juki-hub.rurustudio.cloud"
 ```
 
 ### 2. Analisis Request Pattern

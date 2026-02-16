@@ -18,6 +18,7 @@ export class LoggingInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest<Request>();
     const { method, url } = request;
+    const origin = request.headers.origin || request.headers.referer || 'direct';
     const now = Date.now();
 
     return next.handle().pipe(
@@ -42,8 +43,11 @@ export class LoggingInterceptor implements NestInterceptor {
           logData = logData.substring(0, 1000) + '... (truncated)';
         }
 
+        // Include origin for CORS debugging
+        const originInfo = origin !== 'direct' ? ` from ${origin}` : '';
+        
         this.logger.log(
-          `[${method}] ${url} - ${responseTime}ms - Response: ${logData}`,
+          `[${method}] ${url}${originInfo} - ${responseTime}ms - Response: ${logData}`,
           'HTTP',
         );
       }),

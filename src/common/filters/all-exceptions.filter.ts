@@ -21,11 +21,20 @@ export class AllExceptionsFilter implements ExceptionFilter {
         exception instanceof HttpException ? exception.getResponse() : 'Internal server error',
     };
 
-    this.logger.error(
-      `[${request.method}] ${request.url} - ${status} - ${JSON.stringify(errorResponse)}`,
-      exception instanceof Error ? exception.stack : '',
-      'ExceptionFilter',
-    );
+    // Log 401 Unauthorized sebagai WARN (bukan ERROR) karena ini normal behavior
+    if (status === 401) {
+      this.logger.warn(
+        `[${request.method}] ${request.url} - ${status} - Unauthorized access attempt`,
+        'ExceptionFilter',
+      );
+    } else {
+      // Log error lainnya sebagai ERROR dengan full details
+      this.logger.error(
+        `[${request.method}] ${request.url} - ${status} - ${JSON.stringify(errorResponse)}`,
+        exception instanceof Error ? exception.stack : '',
+        'ExceptionFilter',
+      );
+    }
 
     response.status(status).json(errorResponse);
   }
