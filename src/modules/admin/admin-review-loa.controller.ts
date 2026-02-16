@@ -89,7 +89,7 @@ export class AdminReviewLoaController {
       }),
       fileFilter: (_req, file, cb) => {
         if (!file.mimetype.match(/\/(pdf)$/)) {
-          return cb(new Error('Only PDF files are allowed'), false);
+          return cb(new BadRequestException('Only PDF files are allowed'), false);
         }
         cb(null, true);
       },

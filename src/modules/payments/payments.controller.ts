@@ -46,14 +46,14 @@ export class PaymentsController {
         fileSize: 5 * 1024 * 1024, // 5MB
       },
       fileFilter: (_req, file, cb) => {
-        const allowedMimes = ['image/jpeg', 'image/png', 'image/jpg'];
-        const allowedExts = ['.jpg', '.jpeg', '.png'];
+        const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        const allowedExts = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
         const ext = path.extname(file.originalname).toLowerCase();
 
         if (!allowedMimes.includes(file.mimetype) || !allowedExts.includes(ext)) {
           return cb(
             new BadRequestException({
-              message: 'Only image files (jpg, jpeg, png) are allowed',
+              message: 'Only image files (jpg, jpeg, png, webp, gif) are allowed',
               received: {
                 filename: file.originalname,
                 mimetype: file.mimetype,
@@ -79,8 +79,8 @@ export class PaymentsController {
         requirements: {
           fieldName: 'file',
           contentType: 'multipart/form-data',
-          allowedTypes: ['image/jpeg', 'image/png', 'image/jpg'],
-          allowedExtensions: ['.jpg', '.jpeg', '.png'],
+          allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+          allowedExtensions: ['.jpg', '.jpeg', '.png', '.webp', '.gif'],
           maxSize: '5MB',
         },
         example: {
