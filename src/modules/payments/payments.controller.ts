@@ -52,7 +52,18 @@ export class PaymentsController {
 
         if (!allowedMimes.includes(file.mimetype) || !allowedExts.includes(ext)) {
           return cb(
-            new BadRequestException('Only image files (jpg, jpeg, png) are allowed'),
+            new BadRequestException({
+              message: 'Only image files (jpg, jpeg, png) are allowed',
+              received: {
+                filename: file.originalname,
+                mimetype: file.mimetype,
+                extension: ext,
+              },
+              allowed: {
+                mimetypes: allowedMimes,
+                extensions: allowedExts,
+              },
+            }),
             false,
           );
         }
@@ -65,6 +76,17 @@ export class PaymentsController {
       throw new BadRequestException({
         message: 'File is required',
         hint: 'Make sure to send file with key "file" in multipart/form-data',
+        requirements: {
+          fieldName: 'file',
+          contentType: 'multipart/form-data',
+          allowedTypes: ['image/jpeg', 'image/png', 'image/jpg'],
+          allowedExtensions: ['.jpg', '.jpeg', '.png'],
+          maxSize: '5MB',
+        },
+        example: {
+          curl: 'curl -X POST http://localhost:3001/api/v1/payments/upload -H "Authorization: Bearer YOUR_TOKEN" -F "file=@/path/to/image.jpg"',
+          javascript: 'const formData = new FormData(); formData.append("file", fileObject); fetch("/api/v1/payments/upload", { method: "POST", headers: { "Authorization": "Bearer " + token }, body: formData });',
+        },
       });
     }
     const request = req as Request & { user: JwtUser };

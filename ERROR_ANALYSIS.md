@@ -37,11 +37,11 @@
 
 ---
 
-### 3. ⚠️ File Upload Error - 400 (IMPROVED)
+### 3. ✅ File Upload Error - 400 (IMPROVED)
 
 **Error:**
 ```
-[ERROR] ... - [POST] /api/v1/payments/upload - 400 - {"message":"File is required"}
+[WARN] ... - [POST] /api/v1/payments/upload - 400 - {"message":"File is required",...}
 ```
 
 **Penyebab:**
@@ -53,22 +53,50 @@
 
 **Solusi:**
 - ✅ Sekarang di-log sebagai **WARN** (bukan ERROR)
-- ✅ Error message lebih informatif dengan hint
-- Frontend perlu diperbaiki untuk mengirim file dengan benar
+- ✅ Error message sangat informatif dengan:
+  - Requirements (field name, allowed types, max size)
+  - Example code (curl dan javascript)
+  - Hint yang jelas
+
+**Error Response Baru:**
+```json
+{
+  "statusCode": 400,
+  "message": {
+    "message": "File is required",
+    "hint": "Make sure to send file with key 'file' in multipart/form-data",
+    "requirements": {
+      "fieldName": "file",
+      "contentType": "multipart/form-data",
+      "allowedTypes": ["image/jpeg", "image/png", "image/jpg"],
+      "allowedExtensions": [".jpg", ".jpeg", ".png"],
+      "maxSize": "5MB"
+    },
+    "example": {
+      "curl": "curl -X POST ... -F 'file=@/path/to/image.jpg'",
+      "javascript": "const formData = new FormData(); formData.append('file', fileObject); ..."
+    }
+  }
+}
+```
 
 **Frontend Fix:**
 ```typescript
-// Pastikan menggunakan FormData
+// ✅ CORRECT
 const formData = new FormData();
 formData.append('file', fileObject); // key harus "file"
 
-// Pastikan Content-Type: multipart/form-data
 fetch('/api/v1/payments/upload', {
   method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    // JANGAN set Content-Type, biarkan browser set otomatis
+  },
   body: formData,
-  // JANGAN set Content-Type manual, biarkan browser set otomatis
 });
 ```
+
+**Dokumentasi Lengkap:** Lihat `PAYMENT_UPLOAD_API.md`
 
 ---
 
