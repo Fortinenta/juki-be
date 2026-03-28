@@ -40,6 +40,11 @@ export class AdminPaymentsService {
         },
       });
 
+      await this.prisma.userTrainingFlow.update({
+        where: { userId },
+        data: { rejectionReason: dto.reason },
+      });
+
       return { message: 'Payment rejected. User required to re-upload.' };
     }
 
@@ -52,6 +57,11 @@ export class AdminPaymentsService {
         action: 'VERIFY_PAYMENT',
         paymentId: payment.id,
       },
+    });
+
+    await this.prisma.userTrainingFlow.update({
+      where: { userId },
+      data: { rejectionReason: null },
     });
 
     return {

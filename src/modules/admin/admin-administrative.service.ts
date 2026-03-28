@@ -12,7 +12,7 @@ export class AdminAdministrativeService {
 
   async setJournalCode(userId: string, journalCode: string, adminId: string) {
     // Validasi journalCode
-    const validJournals = ['JIE', 'JOEFI', 'JOESMENT'];
+    const validJournals = ['JIE', 'JOFEI', 'JOESMENT'];
     if (!validJournals.includes(journalCode)) {
       throw new BadRequestException(
         `Invalid journal code. Must be one of: ${validJournals.join(', ')}`,
@@ -81,7 +81,7 @@ export class AdminAdministrativeService {
     }
 
     // Validasi journalCode
-    const validJournals = ['JIE', 'JOEFI', 'JOESMENT'];
+    const validJournals = ['JIE', 'JOFEI', 'JOESMENT'];
     if (!validJournals.includes(data.journalCode)) {
       throw new BadRequestException(
         `Invalid journal code. Must be one of: ${validJournals.join(', ')}`,

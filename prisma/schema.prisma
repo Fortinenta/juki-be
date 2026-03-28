@@ -91,9 +91,10 @@ model UserTrainingFlow {
   ojsAccount   OjsAccount? @relation(fields: [ojsAccountId], references: [id])
   articleTitle String?
   journalCode  String?
-  isLocked     Boolean? @default(false)
-  lockedReason String?
-  version      Int      @default(1)
+  isLocked        Boolean? @default(false)
+  lockedReason    String?
+  rejectionReason String?
+  version         Int      @default(1)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

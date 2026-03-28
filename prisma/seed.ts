@@ -170,7 +170,7 @@ async function main() {
   console.log('Populating LookupJournals...');
   const journals = [
     { code: 'JIE', name: 'Journal of Industrial Engineering', isActive: true },
-    { code: 'JOEFI', name: 'Journal of Economics and Finance', isActive: true },
+    { code: 'JOFEI', name: 'JOFEI', isActive: true },
     { code: 'JOESMENT', name: 'Journal of Education and Management', isActive: true },
   ];
 
@@ -237,34 +237,34 @@ async function main() {
       mentorName: 'Tony Stark',
       quota: 50,
     },
-    // JOEFI Trainings
+    // JOFEI Trainings
     {
-      batch: 'BATCH-JOEFI-TODAY',
-      title: 'Pelatihan Jurnal JOEFI (Hari Ini)',
+      batch: 'BATCH-JOFEI-TODAY',
+      title: 'Pelatihan Jurnal JOFEI (Hari Ini)',
       startAt: addHours(today, 6),
       endAt: addHours(today, 9),
       location: 'Microsoft Teams',
-      journalCode: 'JOEFI',
+      journalCode: 'JOFEI',
       mentorName: 'Dr. Banner',
       quota: 40,
     },
     {
-      batch: 'BATCH-JOEFI-NEXT-WEEK',
-      title: 'Pelatihan Jurnal JOEFI (Minggu Depan)',
+      batch: 'BATCH-JOFEI-NEXT-WEEK',
+      title: 'Pelatihan Jurnal JOFEI (Minggu Depan)',
       startAt: addDays(today, 7),
       endAt: addHours(addDays(today, 7), 4),
       location: 'Offline - Aula Utama',
-      journalCode: 'JOEFI',
+      journalCode: 'JOFEI',
       mentorName: 'Bruce Banner',
       quota: 200,
     },
     {
-      batch: 'BATCH-JOEFI-FULL',
-      title: 'Pelatihan Jurnal JOEFI (Penuh)',
+      batch: 'BATCH-JOFEI-FULL',
+      title: 'Pelatihan Jurnal JOFEI (Penuh)',
       startAt: addDays(today, 2),
       endAt: addHours(addDays(today, 2), 2),
       location: 'Small Room',
-      journalCode: 'JOEFI',
+      journalCode: 'JOFEI',
       mentorName: 'Full Man',
       quota: 0,
     },

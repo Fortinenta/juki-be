@@ -38,6 +38,8 @@ export class AdminTrainingsService {
         { title: { contains: query.search, mode: 'insensitive' } },
         { batch: { contains: query.search, mode: 'insensitive' } },
         { mentorName: { contains: query.search, mode: 'insensitive' } },
+        { journalCode: { contains: query.search, mode: 'insensitive' } },
+        { location: { contains: query.search, mode: 'insensitive' } },
       ];
     }
 
