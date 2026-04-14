@@ -18,10 +18,7 @@ export class AdminReviewLoaService {
       where: { userId },
     });
 
-    const allowedStatuses = [
-      TRAINING_STATUS.TRAINING_VERIFIED,
-      TRAINING_STATUS.REVIEW_WAITING,
-    ];
+    const allowedStatuses = [TRAINING_STATUS.TRAINING_VERIFIED, TRAINING_STATUS.REVIEW_WAITING];
 
     if (!flow || !allowedStatuses.includes(flow.statusCode as any)) {
       throw new BadRequestException('Invalid flow state for accepting review');
@@ -48,10 +45,7 @@ export class AdminReviewLoaService {
       where: { userId },
     });
 
-    const allowedStatuses = [
-      TRAINING_STATUS.TRAINING_VERIFIED,
-      TRAINING_STATUS.REVIEW_WAITING,
-    ];
+    const allowedStatuses = [TRAINING_STATUS.TRAINING_VERIFIED, TRAINING_STATUS.REVIEW_WAITING];
 
     if (!flow || !allowedStatuses.includes(flow.statusCode as any)) {
       throw new BadRequestException('Invalid flow state for revision request');
@@ -92,14 +86,18 @@ export class AdminReviewLoaService {
       const isValidState = flow.statusCode === TRAINING_STATUS.LOA_WAITING || isReupload;
 
       if (!isValidState) {
-        throw new BadRequestException(`Invalid State: ${flow.statusCode}. Expected: ${TRAINING_STATUS.LOA_WAITING} or ${TRAINING_STATUS.LOA_PUBLISHED}`);
+        throw new BadRequestException(
+          `Invalid State: ${flow.statusCode}. Expected: ${TRAINING_STATUS.LOA_WAITING} or ${TRAINING_STATUS.LOA_PUBLISHED}`,
+        );
       }
 
       // Normalize path for Windows compatibility
       const normalizePath = (p: string) => p.replace(/\\/g, '/');
-      
+
       const attachmentPath = normalizePath(file.path);
-      console.log(`[AdminReviewLoa] Saving ${isReupload ? 'NEW ' : ''}attachment to DB: ${attachmentPath}`);
+      console.log(
+        `[AdminReviewLoa] Saving ${isReupload ? 'NEW ' : ''}attachment to DB: ${attachmentPath}`,
+      );
 
       // Delete existing LOA records and physical files for this user
       const existingLoas = await this.prisma.attachment.findMany({
@@ -113,7 +111,10 @@ export class AdminReviewLoaService {
             console.log(`[AdminReviewLoa] Deleted old LOA file: ${loa.filePath}`);
           }
         } catch (err) {
-          console.warn(`[AdminReviewLoa] Failed to delete old file at ${loa.filePath}:`, err.message);
+          console.warn(
+            `[AdminReviewLoa] Failed to delete old file at ${loa.filePath}:`,
+            err.message,
+          );
         }
       }
 
@@ -153,11 +154,11 @@ export class AdminReviewLoaService {
       return { message: 'LOA issued successfully' };
     } catch (error) {
       console.error('[AdminReviewLoa] CRITICAL ERROR:', error);
-      
+
       if (error instanceof BadRequestException || error.status) {
-         throw error;
+        throw error;
       }
-      
+
       throw new BadRequestException(`Upload failed: ${error.message || 'Unknown server error'}`);
     }
   }

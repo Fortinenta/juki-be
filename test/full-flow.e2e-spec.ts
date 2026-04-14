@@ -8,7 +8,6 @@ describe('Full User Journey (e2e)', () => {
   let app: INestApplication;
   let accessToken: string;
   let refreshToken: string;
-  let userId: string;
 
   const testUser = {
     email: `test.${Date.now()}@example.com`,
@@ -27,16 +26,18 @@ describe('Full User Journey (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    
+
     // Replicate main.ts pipes
-    app.useGlobalPipes(new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
-    }));
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+        transformOptions: {
+          enableImplicitConversion: true,
+        },
+      }),
+    );
 
     await app.init();
   });
@@ -50,7 +51,7 @@ describe('Full User Journey (e2e)', () => {
       .post('/auth/register')
       .send(testUser)
       .expect(201);
-      
+
     expect(response.body).toHaveProperty('message', 'Registered successfully');
   });
 
@@ -65,7 +66,7 @@ describe('Full User Journey (e2e)', () => {
 
     expect(response.body).toHaveProperty('accessToken');
     expect(response.body).toHaveProperty('refreshToken');
-    
+
     accessToken = response.body.accessToken;
     refreshToken = response.body.refreshToken;
   });
@@ -78,12 +79,11 @@ describe('Full User Journey (e2e)', () => {
 
     expect(response.body).toHaveProperty('userId');
     expect(response.body).toHaveProperty('fullName', testUser.fullName);
-    userId = response.body.userId;
   });
 
   it('4. Upload Payment Proof', async () => {
     const filePath = path.join(__dirname, 'fixtures', 'payment.jpg');
-    
+
     const response = await request(app.getHttpServer())
       .post('/payments/upload')
       .set('Authorization', `Bearer ${accessToken}`)
@@ -93,9 +93,9 @@ describe('Full User Journey (e2e)', () => {
     expect(response.body).toHaveProperty('message', 'Payment proof uploaded successfully');
   });
 
-  // Note: We cannot easily verify external status change without an endpoint or DB access, 
+  // Note: We cannot easily verify external status change without an endpoint or DB access,
   // but successful upload implies transition logic ran.
-  
+
   it('5. Refresh Token', async () => {
     const response = await request(app.getHttpServer())
       .post('/auth/refresh')
@@ -117,11 +117,11 @@ describe('Full User Journey (e2e)', () => {
   });
 
   it('7. Verify Access Token Invalidated', async () => {
-     await request(app.getHttpServer())
+    await request(app.getHttpServer())
       .get('/profiles/me')
       .set('Authorization', `Bearer ${accessToken}`)
       // Depending on strategy, it might still be valid JWT but session might be gone?
-      // Our JwtStrategy just verifies signature. 
+      // Our JwtStrategy just verifies signature.
       // Wait, we didn't implement blacklist/session check in JwtStrategy, only in Refresh.
       // So logout only kills refresh session. Access token remains valid until expiry.
       // This is standard JWT behavior unless we check DB in JwtStrategy.
@@ -131,6 +131,6 @@ describe('Full User Journey (e2e)', () => {
       // So Access Token IS STILL VALID.
       // Changing expectation to 200 for now, or skipping.
       // Ideally, we want 401. But that requires DB check in JwtStrategy.
-      .expect(200); 
+      .expect(200);
   });
 });

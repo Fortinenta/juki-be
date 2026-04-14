@@ -19,12 +19,15 @@ export class SettingsService {
    */
   async getSettings() {
     const configs = await this.prisma.systemConfig.findMany();
-    
+
     // Reduce array to object { key: value }
-    const settings = configs.reduce((acc, curr) => {
-      acc[curr.key] = curr.value;
-      return acc;
-    }, {} as Record<string, string>);
+    const settings = configs.reduce(
+      (acc, curr) => {
+        acc[curr.key] = curr.value;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
 
     return settings;
   }
@@ -34,23 +37,25 @@ export class SettingsService {
    * Handles multiple updates in transaction
    */
   async updateSettings(dto: UpdateSettingsDto) {
-    const updates = Object.entries(dto).map(([key, value]) => {
-      if (value !== undefined) {
-        return this.prisma.systemConfig.upsert({
-          where: { key },
-          update: { value: String(value) },
-          create: { 
-            key, 
-            value: String(value),
-            description: this.getDescriptionForKey(key)
-          },
-        });
-      }
-      return null;
-    }).filter(Boolean); // Remove nulls
+    const updates = Object.entries(dto)
+      .map(([key, value]) => {
+        if (value !== undefined) {
+          return this.prisma.systemConfig.upsert({
+            where: { key },
+            update: { value: String(value) },
+            create: {
+              key,
+              value: String(value),
+              description: this.getDescriptionForKey(key),
+            },
+          });
+        }
+        return null;
+      })
+      .filter(Boolean); // Remove nulls
 
     await this.prisma.$transaction(updates as any[]);
-    
+
     return this.getSettings();
   }
 

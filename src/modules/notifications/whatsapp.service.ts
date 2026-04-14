@@ -12,7 +12,7 @@ export class WhatsAppService {
   async sendMessage(phone: string, message: string): Promise<boolean> {
     try {
       const apiKey = this.configService.get<string>('FONNTE_API_KEY');
-      
+
       if (!apiKey) {
         console.warn('FONNTE_API_KEY not configured. WhatsApp message not sent.');
         return false;
@@ -20,16 +20,16 @@ export class WhatsAppService {
 
       // Format phone number (remove +, spaces, etc)
       const formattedPhone = phone.replace(/[^0-9]/g, '');
-      
+
       // Add country code if not present (Indonesia: 62)
-      const phoneWithCountryCode = formattedPhone.startsWith('62') 
-        ? formattedPhone 
+      const phoneWithCountryCode = formattedPhone.startsWith('62')
+        ? formattedPhone
         : `62${formattedPhone.startsWith('0') ? formattedPhone.substring(1) : formattedPhone}`;
 
       const response = await fetch('https://api.fonnte.com/send', {
         method: 'POST',
         headers: {
-          'Authorization': apiKey,
+          Authorization: apiKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -40,7 +40,7 @@ export class WhatsAppService {
       });
 
       const result = await response.json();
-      
+
       if (result.status) {
         console.log(`WhatsApp sent to ${phoneWithCountryCode}: Success`);
         return true;
@@ -79,7 +79,12 @@ Tim JUKI`;
   /**
    * Send training reminder
    */
-  async sendTrainingReminder(phone: string, fullName: string, trainingTitle: string, trainingDate: string): Promise<boolean> {
+  async sendTrainingReminder(
+    phone: string,
+    fullName: string,
+    trainingTitle: string,
+    trainingDate: string,
+  ): Promise<boolean> {
     const message = `Halo ${fullName},
 
 Reminder: Pelatihan Anda akan dimulai besok!

@@ -12,7 +12,10 @@ export class AuditLogsController {
 
   @Get()
   @Roles('ADMIN', 'SUPER_ADMIN')
-  async findAll(@Query() query: QueryAuditLogsDto, @CurrentUser('roles') currentUserRoles: string[]) {
+  async findAll(
+    @Query() query: QueryAuditLogsDto,
+    @CurrentUser('roles') currentUserRoles: string[],
+  ) {
     return this.auditLogsService.findAll(query, currentUserRoles);
   }
 

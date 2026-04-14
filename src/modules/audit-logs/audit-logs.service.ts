@@ -36,7 +36,7 @@ export class AuditLogsService {
 
   async findByUserId(userId: string, currentUserId: string, roles: string[]): Promise<AuditLog[]> {
     const isAdmin = roles.includes('ADMIN') || roles.includes('SUPER_ADMIN');
-    
+
     if (!isAdmin && userId !== currentUserId) {
       throw new ForbiddenException('Unauthorized access to audit logs');
     }

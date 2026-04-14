@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateFeedbackDto, QueryFeedbackDto } from './dto/feedbacks.dto';
 import { Feedback } from '@prisma/client';
@@ -23,7 +23,9 @@ export class FeedbacksService {
     });
   }
 
-  async findAll(query: QueryFeedbackDto): Promise<{ data: Feedback[]; total: number; page: number; limit: number }> {
+  async findAll(
+    query: QueryFeedbackDto,
+  ): Promise<{ data: Feedback[]; total: number; page: number; limit: number }> {
     const page = query.page || 1;
     const limit = query.limit || 10;
     const skip = (page - 1) * limit;
@@ -56,5 +58,19 @@ export class FeedbacksService {
       page,
       limit,
     };
+  }
+
+  async remove(id: string) {
+    const feedback = await this.prisma.feedback.findUnique({
+      where: { id },
+    });
+
+    if (!feedback) {
+      throw new NotFoundException('Feedback not found');
+    }
+
+    return this.prisma.feedback.delete({
+      where: { id },
+    });
   }
 }

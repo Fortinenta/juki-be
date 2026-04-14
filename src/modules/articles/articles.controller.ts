@@ -1,15 +1,21 @@
-import { Post, Get, UseGuards, UseInterceptors, UploadedFile, Req, Controller, BadRequestException, StreamableFile, Res, NotFoundException, Body } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import {
+  Post,
+  Get,
+  UseGuards,
+  Req,
+  Controller,
+  BadRequestException,
+  StreamableFile,
+  Res,
+  NotFoundException,
+  Body,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FlowStatusGuard } from '../../common/guards/flow-status.guard';
 import { FlowStatus } from '../../common/decorators/flow-status.decorator';
 import { ArticlesService } from './articles.service';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { TRAINING_STATUS } from '../../common/constants/training-status.constants';
-import { JwtUser } from '../auth/types/jwt-user.type';
-import * as path from 'path';
-import * as crypto from 'crypto';
 import * as fs from 'fs';
 import { createReadStream } from 'fs';
 

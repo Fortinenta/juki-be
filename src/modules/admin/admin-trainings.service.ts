@@ -1,6 +1,11 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateTrainingDto, UpdateTrainingDto, QueryAdminTrainingsDto, TrainingAttendanceDto } from './dto/admin-trainings.dto';
+import {
+  CreateTrainingDto,
+  UpdateTrainingDto,
+  QueryAdminTrainingsDto,
+  TrainingAttendanceDto,
+} from './dto/admin-trainings.dto';
 import { TRAINING_STATUS } from '../../common/constants/training-status.constants';
 
 @Injectable()
@@ -112,17 +117,17 @@ export class AdminTrainingsService {
     if (!training) throw new NotFoundException('Training not found');
 
     if (dto.startAt && dto.endAt) {
-       if (new Date(dto.startAt) >= new Date(dto.endAt)) {
-         throw new BadRequestException('End date must be after start date');
-       }
+      if (new Date(dto.startAt) >= new Date(dto.endAt)) {
+        throw new BadRequestException('End date must be after start date');
+      }
     } else if (dto.startAt) {
-       if (new Date(dto.startAt) >= new Date(training.endAt)) {
-         throw new BadRequestException('Start date must be before end date');
-       }
+      if (new Date(dto.startAt) >= new Date(training.endAt)) {
+        throw new BadRequestException('Start date must be before end date');
+      }
     } else if (dto.endAt) {
-       if (new Date(training.startAt) >= new Date(dto.endAt)) {
-         throw new BadRequestException('End date must be after start date');
-       }
+      if (new Date(training.startAt) >= new Date(dto.endAt)) {
+        throw new BadRequestException('End date must be after start date');
+      }
     }
 
     return this.prisma.training.update({
@@ -161,7 +166,7 @@ export class AdminTrainingsService {
     });
   }
 
-  async recordAttendance(dto: TrainingAttendanceDto, actorId: string) {
+  async recordAttendance(dto: TrainingAttendanceDto) {
     // 1. Validasi Training
     const training = await this.prisma.training.findUnique({
       where: { id: dto.trainingId },
@@ -180,7 +185,9 @@ export class AdminTrainingsService {
     }
 
     if (flow.statusCode !== TRAINING_STATUS.TRAINING_WAITING) {
-      throw new BadRequestException(`User is currently in ${flow.statusCode} status, cannot record attendance.`);
+      throw new BadRequestException(
+        `User is currently in ${flow.statusCode} status, cannot record attendance.`,
+      );
     }
 
     // 3. Update berdasarkan status

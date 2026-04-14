@@ -16,12 +16,8 @@ export class AdminAdministrativeController {
    * Bisa dilakukan kapan saja sebelum user memilih training
    */
   @Post(':userId/set-journal')
-  async setJournalCode(
-    @Param('userId') userId: string,
-    @Body('journalCode') journalCode: string,
-    @Req() req: any,
-  ) {
-    return this.service.setJournalCode(userId, journalCode, req.user.id);
+  async setJournalCode(@Param('userId') userId: string, @Body('journalCode') journalCode: string) {
+    return this.service.setJournalCode(userId, journalCode);
   }
 
   /**
@@ -31,6 +27,19 @@ export class AdminAdministrativeController {
   @Post(':userId/complete')
   async completeAdministrative(@Param('userId') userId: string, @Req() req: any) {
     return this.service.completeAdministrative(userId, req.user.id);
+  }
+
+  /**
+   * Menolak administrasi
+   * WAITING_ADMINISTRATIVE -> ADMINISTRATIVE_REJECTED
+   */
+  @Post(':userId/reject')
+  async rejectAdministrative(
+    @Param('userId') userId: string,
+    @Body('reason') reason: string,
+    @Req() req: any,
+  ) {
+    return this.service.rejectAdministrative(userId, reason, req.user.id);
   }
 
   /**

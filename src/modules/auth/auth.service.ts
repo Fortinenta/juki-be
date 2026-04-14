@@ -22,15 +22,15 @@ export class AuthService {
 
     const payload = { sub: user.id, email: user.email, roles: [user.role] };
     const accessToken = this.jwtService.sign(payload);
-    
+
     const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
     const refreshToken = this.jwtService.sign(
-      { sub: user.id, email: user.email }, 
-      { secret: refreshSecret, expiresIn: '7d' }
+      { sub: user.id, email: user.email },
+      { secret: refreshSecret, expiresIn: '7d' },
     );
 
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
-    
+
     await this.prisma.session.create({
       data: {
         userId: user.id,
@@ -50,7 +50,7 @@ export class AuthService {
 
   async register(dto: RegisterDto) {
     const hashedPassword = await bcrypt.hash(dto.password, 10);
-    
+
     return this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
@@ -60,10 +60,10 @@ export class AuthService {
           status: 'ACTIVE',
         },
       });
-      
+
       // birthDate is string from DTO, ensure it's ISO compatible for Prisma DateTime
       // If DTO validation passed IsDateString, it should be fine.
-      
+
       await tx.profile.create({
         data: {
           userId: user.id,
@@ -75,11 +75,11 @@ export class AuthService {
           gender: dto.gender,
         },
       });
-      
+
       await tx.userTrainingFlow.create({
         data: { userId: user.id, statusCode: 'PAYMENT_REQUIRED' },
       });
-      
+
       return { message: 'Registered successfully' };
     });
   }
@@ -112,7 +112,7 @@ export class AuthService {
 
     const payload = { sub: user.id, email: user.email, roles: [user.role] };
     const accessToken = this.jwtService.sign(payload);
-    
+
     return { accessToken };
   }
 
@@ -130,7 +130,7 @@ export class AuthService {
       throw new BadRequestException('Invalid old password');
     }
     const hashedNew = await bcrypt.hash(newPassword, 10);
-    
+
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
@@ -138,7 +138,11 @@ export class AuthService {
       });
       await tx.session.deleteMany({ where: { userId } });
       await tx.auditLog.create({
-        data: { userId, action: AuditAction.UPDATE_PASSWORD, metadata: { details: 'Password changed, sessions revoked' } },
+        data: {
+          userId,
+          action: AuditAction.UPDATE_PASSWORD,
+          metadata: { details: 'Password changed, sessions revoked' },
+        },
       });
     });
 

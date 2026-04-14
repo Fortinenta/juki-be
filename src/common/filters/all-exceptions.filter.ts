@@ -22,7 +22,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     };
 
     // Ignore logging untuk error yang tidak penting (noise)
-    const shouldIgnore = 
+    const shouldIgnore =
       status === 401 || // Unauthorized - normal behavior
       (status === 404 && (request.url === '/' || request.url === '')) || // Root path 404
       (status === 404 && request.method === 'PROPFIND'); // WebDAV requests
@@ -38,9 +38,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       // Ignore 404 root path dan PROPFIND (biasanya dari scanner/bot)
     } else if (status === 400) {
       // Log 400 Bad Request sebagai WARN (validation error, bukan server error)
-      const message = typeof errorResponse.message === 'object' 
-        ? JSON.stringify(errorResponse.message)
-        : errorResponse.message;
+      const message =
+        typeof errorResponse.message === 'object'
+          ? JSON.stringify(errorResponse.message)
+          : errorResponse.message;
       this.logger.warn(
         `[${request.method}] ${request.url} - ${status} - ${message}`,
         'ExceptionFilter',

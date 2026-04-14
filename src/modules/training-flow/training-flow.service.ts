@@ -98,14 +98,14 @@ export class TrainingFlowService {
           console.error('[Flow] Non-fatal Audit Log Error:', auditError.message);
           // We don't throw here to allow the status update to persist
         }
-        
+
         console.log('[Flow] Transaction complete.');
         return updated;
       });
     } catch (error) {
       console.error('[Flow] Transaction failed:', error);
       if (error.code === 'P2003') {
-        throw new BadRequestException('Invalid Actor ID (Admin not found in DB). Please re-login.');
+        throw new BadRequestException('Foreign key constraint failed. Check status code or actor existence.');
       }
       throw error;
     }

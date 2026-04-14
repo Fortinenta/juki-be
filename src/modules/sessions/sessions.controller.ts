@@ -11,10 +11,7 @@ export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
 
   @Get('user/:userId')
-  async findAllByUserId(
-    @Param('userId') userId: string,
-    @CurrentUser('id') currentUserId: string,
-  ) {
+  async findAllByUserId(@Param('userId') userId: string, @CurrentUser('id') currentUserId: string) {
     return this.sessionsService.findAllByUserId(userId, currentUserId);
   }
 

@@ -10,7 +10,7 @@ export class AdminAdministrativeService {
     private readonly trainingFlowService: TrainingFlowService,
   ) {}
 
-  async setJournalCode(userId: string, journalCode: string, adminId: string) {
+  async setJournalCode(userId: string, journalCode: string) {
     // Validasi journalCode
     const validJournals = ['JIE', 'JOFEI', 'JOESMENT'];
     if (!validJournals.includes(journalCode)) {
@@ -65,6 +65,26 @@ export class AdminAdministrativeService {
     return { message: 'Administrative requirements completed' };
   }
 
+  async rejectAdministrative(userId: string, reason: string, adminId: string) {
+    if (!reason) {
+      throw new BadRequestException('Rejection reason is required');
+    }
+
+    await this.prisma.userTrainingFlow.update({
+      where: { userId },
+      data: { rejectionReason: reason },
+    });
+
+    await this.trainingFlowService.transitionStatus({
+      userId,
+      nextStatus: TRAINING_STATUS.ADMINISTRATIVE_REJECTED,
+      actorId: adminId,
+      metadata: { action: 'REJECT_ADMINISTRATIVE', reason },
+    });
+
+    return { message: 'Administrative form rejected. User required to re-submit.' };
+  }
+
   async createOjsAccount(
     userId: string,
     data: { username: string; password: string; journalCode: string; journalLink: string },
@@ -94,7 +114,7 @@ export class AdminAdministrativeService {
 
     await this.prisma.userTrainingFlow.update({
       where: { userId },
-      data: { 
+      data: {
         ojsAccountId: ojs.id,
         journalCode: data.journalCode, // Sync journalCode to flow table
       },

@@ -1,10 +1,19 @@
-import { Controller, Get, Post, Body, UseGuards, Req, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Body,
+  UseGuards,
+  Req,
+  Query,
+  Param,
+} from '@nestjs/common';
 import { FeedbacksService } from './feedbacks.service';
 import { CreateFeedbackDto, QueryFeedbackDto } from './dto/feedbacks.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { Request } from 'express';
 import { JwtUser } from '../auth/types/jwt-user.type';
 
 @Controller('feedbacks')
@@ -29,5 +38,12 @@ export class FeedbacksController {
   @Roles('ADMIN', 'SUPER_ADMIN')
   async findAll(@Query() query: QueryFeedbackDto) {
     return this.feedbacksService.findAll(query);
+  }
+
+  @Delete(':id')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  async remove(@Param('id') id: string) {
+    return this.feedbacksService.remove(id);
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { TrainingFlowService } from '../training-flow/training-flow.service';
 import { TRAINING_STATUS } from '../../common/constants/training-status.constants';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -33,13 +33,13 @@ export class AdministrativeService {
       userId,
       nextStatus: TRAINING_STATUS.WAITING_ADMINISTRATIVE,
       actorId: userId,
-      metadata: { 
-        action: 'CONFIRM_ADMINISTRATIVE_FORM', 
-        journalCode: flow?.journalCode || null 
+      metadata: {
+        action: 'CONFIRM_ADMINISTRATIVE_FORM',
+        journalCode: flow?.journalCode || null,
       },
     });
 
-    return { 
+    return {
       message: 'Administrative form submission confirmed. Waiting for admin verification.',
       journalSelected: !!flow?.journalCode,
       journalCode: flow?.journalCode || null,

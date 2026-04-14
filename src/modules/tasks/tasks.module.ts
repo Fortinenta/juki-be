@@ -4,10 +4,7 @@ import { TasksService } from './tasks.service';
 import { PrismaModule } from '../../prisma/prisma.module';
 
 @Module({
-  imports: [
-    ScheduleModule.forRoot(),
-    PrismaModule,
-  ],
+  imports: [ScheduleModule.forRoot(), PrismaModule],
   providers: [TasksService],
 })
 export class TasksModule {}

@@ -85,7 +85,8 @@ export class PaymentsController {
         },
         example: {
           curl: 'curl -X POST http://localhost:3001/api/v1/payments/upload -H "Authorization: Bearer YOUR_TOKEN" -F "file=@/path/to/image.jpg"',
-          javascript: 'const formData = new FormData(); formData.append("file", fileObject); fetch("/api/v1/payments/upload", { method: "POST", headers: { "Authorization": "Bearer " + token }, body: formData });',
+          javascript:
+            'const formData = new FormData(); formData.append("file", fileObject); fetch("/api/v1/payments/upload", { method: "POST", headers: { "Authorization": "Bearer " + token }, body: formData });',
         },
       });
     }

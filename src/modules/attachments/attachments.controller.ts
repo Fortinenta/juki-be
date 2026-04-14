@@ -1,4 +1,12 @@
-import { Controller, Get, Param, Req, UseGuards, NotFoundException, StreamableFile } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Req,
+  UseGuards,
+  NotFoundException,
+  StreamableFile,
+} from '@nestjs/common';
 import { AttachmentsService } from './attachments.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { JwtUser } from '../auth/types/jwt-user.type';
@@ -18,10 +26,7 @@ export class AttachmentsController {
   }
 
   @Get(':id/download')
-  async downloadMyAttachment(
-    @Param('id') id: string,
-    @Req() req: any,
-  ) {
+  async downloadMyAttachment(@Param('id') id: string, @Req() req: any) {
     const user = req.user as JwtUser;
     const fileData = await this.attachmentsService.findOneForDownload(id, user.id);
 
@@ -37,10 +42,7 @@ export class AttachmentsController {
   }
 
   @Get(':id/preview')
-  async previewMyAttachment(
-    @Param('id') id: string,
-    @Req() req: any,
-  ) {
+  async previewMyAttachment(@Param('id') id: string, @Req() req: any) {
     const user = req.user as JwtUser;
     const fileData = await this.attachmentsService.findOneForDownload(id, user.id);
 
@@ -59,9 +61,7 @@ export class AttachmentsController {
   @Get('admin/:id/download')
   @UseGuards(RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
-  async downloadAttachmentAsAdmin(
-    @Param('id') id: string,
-  ) {
+  async downloadAttachmentAsAdmin(@Param('id') id: string) {
     const fileData = await this.attachmentsService.findOneForAdminDownload(id);
 
     if (!existsSync(fileData.path)) {
@@ -78,9 +78,7 @@ export class AttachmentsController {
   @Get('admin/:id/preview')
   @UseGuards(RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
-  async previewAttachmentAsAdmin(
-    @Param('id') id: string,
-  ) {
+  async previewAttachmentAsAdmin(@Param('id') id: string) {
     const fileData = await this.attachmentsService.findOneForAdminDownload(id);
 
     if (!existsSync(fileData.path)) {

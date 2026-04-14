@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TrainingFlowService } from '../training-flow/training-flow.service';
 import { TRAINING_STATUS } from '../../common/constants/training-status.constants';
@@ -145,7 +150,7 @@ export class TrainingsService {
           },
         },
       });
-      
+
       return updatedFlow;
     });
   }

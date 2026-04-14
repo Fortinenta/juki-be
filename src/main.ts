@@ -56,9 +56,12 @@ async function bootstrap(): Promise<void> {
   const env = configService.get<string>('app.env');
   logger.log(`🚀 JUKI API Server listening on http://localhost:${port}/api/v1`, 'Bootstrap');
   logger.log(`Running in ${env} mode`, 'Bootstrap');
-  logger.log(`CORS enabled for: http://localhost:3002, https://juki-hub.rurustudio.cloud`, 'Bootstrap');
+  logger.log(
+    `CORS enabled for: http://localhost:3002, https://juki-hub.rurustudio.cloud`,
+    'Bootstrap',
+  );
   logger.log(`Log files available at: /log/log_YYYY-MM-DD.txt`, 'Bootstrap');
-  
+
   console.log(`🚀 JUKI API Server listening on http://localhost:${port}/api/v1}`);
   console.log(`Running in ${env} mode`);
   console.log(`CORS enabled for: http://localhost:3002, https://juki-hub.rurustudio.cloud`);

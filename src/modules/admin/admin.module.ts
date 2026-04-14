@@ -16,15 +16,7 @@ import { TrainingFlowModule } from '../training-flow/training-flow.module';
 
 @Module({
   imports: [PrismaModule, AdminArticlesModule, AdminReviewLoaModule, TrainingFlowModule],
-  controllers: [
-    AdminPaymentsController,
-    AdminAdministrativeController,
-    AdminTrainingsController,
-  ],
-  providers: [
-    AdminPaymentsService,
-    AdminAdministrativeService,
-    AdminTrainingsService,
-  ],
+  controllers: [AdminPaymentsController, AdminAdministrativeController, AdminTrainingsController],
+  providers: [AdminPaymentsService, AdminAdministrativeService, AdminTrainingsService],
 })
 export class AdminModule {}

@@ -1,6 +1,21 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { AdminTrainingsService } from './admin-trainings.service';
-import { CreateTrainingDto, UpdateTrainingDto, QueryAdminTrainingsDto, TrainingAttendanceDto } from './dto/admin-trainings.dto';
+import {
+  CreateTrainingDto,
+  UpdateTrainingDto,
+  QueryAdminTrainingsDto,
+  TrainingAttendanceDto,
+} from './dto/admin-trainings.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -13,8 +28,8 @@ export class AdminTrainingsController {
   constructor(private readonly service: AdminTrainingsService) {}
 
   @Post('attendance')
-  async recordAttendance(@Body() dto: TrainingAttendanceDto, @Req() req: any) {
-    return this.service.recordAttendance(dto, req.user.id);
+  async recordAttendance(@Body() dto: TrainingAttendanceDto) {
+    return this.service.recordAttendance(dto);
   }
 
   @Post()

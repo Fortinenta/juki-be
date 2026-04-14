@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { User, UserRole, UserStatus } from '@prisma/client';
+import { User, UserStatus } from '@prisma/client';
 import { UpdateUserDto, QueryUsersDto } from './dto/users.dto';
 import { AdminResetPasswordDto } from './dto/reset-password.dto';
 import { WhatsAppService } from '../notifications/whatsapp.service';
 import * as crypto from 'crypto';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UsersService {
@@ -117,6 +118,9 @@ export class UsersService {
           trainingFlow: {
             statusCode: {
               in: [
+                'ADMINISTRATIVE_REQUIRED',
+                'ADMINISTRATIVE_REJECTED',
+                'WAITING_ADMINISTRATIVE',
                 'ARTICLE_WAITING',
                 'ARTICLE_VERIFIED',
                 'TRAINING_WAITING',
@@ -182,31 +186,27 @@ export class UsersService {
   }
 
   async update(id: string, dto: UpdateUserDto): Promise<Partial<User>> {
-    const { 
-      email, 
+    const {
+      email,
       password,
-      role, 
-      status, 
+      role,
+      status,
       articleTitle,
       journalCode,
       ojsUsername,
       ojsPassword,
       ojsJournalLink,
-      ...profileData 
+      ...profileData
     } = dto;
-
-    // Prepare update operations
-    const updateOperations: any[] = [];
 
     // 1. Update User basic info
     const userUpdate: any = {};
     if (email !== undefined) userUpdate.email = email;
     if (role !== undefined) userUpdate.role = role;
     if (status !== undefined) userUpdate.status = status;
-    
+
     // Hash password if provided (admin reset password)
     if (password !== undefined) {
-      const bcrypt = require('bcryptjs');
       userUpdate.password = await bcrypt.hash(password, 10);
     }
 
@@ -216,7 +216,7 @@ export class UsersService {
         update: {
           ...profileData,
           birthDate: profileData.birthDate ? new Date(profileData.birthDate) : undefined,
-        }
+        },
       };
     }
 
@@ -304,11 +304,11 @@ export class UsersService {
     const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
     let password = '';
     const randomBytes = crypto.randomBytes(length);
-    
+
     for (let i = 0; i < length; i++) {
       password += charset[randomBytes[i] % charset.length];
     }
-    
+
     return password;
   }
 
@@ -330,16 +330,13 @@ export class UsersService {
     }
 
     // Generate or use provided password
-    const newPassword = autoGenerate 
-      ? this.generateRandomPassword(12) 
-      : dto.newPassword;
+    const newPassword = autoGenerate ? this.generateRandomPassword(12) : dto.newPassword;
 
     if (!newPassword) {
       throw new Error('Password is required');
     }
 
     // Hash password
-    const bcrypt = require('bcryptjs');
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Update password and revoke sessions

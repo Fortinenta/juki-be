@@ -33,7 +33,7 @@ export class LoggingInterceptor implements NestInterceptor {
         } else {
           try {
             logData = JSON.stringify(data);
-          } catch (e) {
+          } catch {
             logData = '[Unserializable Data]';
           }
         }
@@ -45,7 +45,7 @@ export class LoggingInterceptor implements NestInterceptor {
 
         // Include origin for CORS debugging
         const originInfo = origin !== 'direct' ? ` from ${origin}` : '';
-        
+
         this.logger.log(
           `[${method}] ${url}${originInfo} - ${responseTime}ms - Response: ${logData}`,
           'HTTP',
