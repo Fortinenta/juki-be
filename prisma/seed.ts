@@ -9,6 +9,7 @@ const TRAINING_STATUS = {
   PAYMENT_VERIFIED: 'PAYMENT_VERIFIED',
 
   ADMINISTRATIVE_REQUIRED: 'ADMINISTRATIVE_REQUIRED',
+  ADMINISTRATIVE_REJECTED: 'ADMINISTRATIVE_REJECTED',
   WAITING_ADMINISTRATIVE: 'WAITING_ADMINISTRATIVE',
 
   ARTICLE_WAITING: 'ARTICLE_WAITING',
@@ -38,6 +39,11 @@ async function main() {
     {
       code: TRAINING_STATUS.ADMINISTRATIVE_REQUIRED,
       label: 'Administrative Data Required',
+      step: 2,
+    },
+    {
+      code: TRAINING_STATUS.ADMINISTRATIVE_REJECTED,
+      label: 'Administrative Data Rejected',
       step: 2,
     },
     {
