@@ -48,3 +48,13 @@ lerna-debug.log*
 *.swo
 *~
 .tmp/
+
+# Uploads
+uploads/payments/*
+!uploads/payments/.gitkeep
+
+# Package Manager
+package-lock.json
+
+# Scripts
+test_logging.sh
